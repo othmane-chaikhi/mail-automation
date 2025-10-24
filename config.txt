@@ -2,8 +2,8 @@
 # Replace the values below with your actual information
 
 # Your Gmail credentials
-email=othmanechaikhi.pro@gmail.com
-app_password=tytacttnftiurzlz
+email=yourmail@gmail.com
+app_password=your app key
 
 
 # SMTP Settings (usually don't need to change)
