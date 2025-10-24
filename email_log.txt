@@ -1,0 +1,72 @@
+2025-10-24 16:28:37,500 - INFO - SUCCESS: Connected to SMTP server successfully
+2025-10-24 16:29:14,565 - INFO - SUCCESS: Connected to SMTP server successfully
+2025-10-24 16:30:09,578 - INFO - Starting email automation...
+2025-10-24 16:30:10,228 - INFO - SUCCESS: Connected to SMTP server successfully
+2025-10-24 16:30:10,230 - INFO - Loaded 4 recipients
+2025-10-24 16:30:10,231 - INFO - Processing 1/4: othmane.student@gmail.com
+2025-10-24 16:30:12,166 - INFO - SUCCESS: Email sent to othmane.student@gmail.com (Karim)
+2025-10-24 16:30:12,166 - INFO - Waiting 51s before next email...
+2025-10-24 16:31:03,167 - INFO - Processing 2/4: student.chaikhi@gmail.com
+2025-10-24 16:31:05,364 - INFO - SUCCESS: Email sent to student.chaikhi@gmail.com (Sara)
+2025-10-24 16:31:05,412 - INFO - Waiting 54s before next email...
+2025-10-24 16:31:59,413 - INFO - Processing 3/4: othmane.chaikhi@emsi-edu.ma
+2025-10-24 16:32:01,063 - INFO - SUCCESS: Email sent to othmane.chaikhi@emsi-edu.ma (Ahmed)
+2025-10-24 16:32:01,064 - INFO - Waiting 63s before next email...
+2025-10-24 16:33:04,065 - INFO - Processing 4/4: recruitment@techcorp.com
+2025-10-24 16:33:05,377 - INFO - SUCCESS: Email sent to recruitment@techcorp.com (Marie)
+2025-10-24 16:33:05,377 - INFO - Campaign completed!
+2025-10-24 16:33:05,377 - INFO - Sent: 4, Failed: 0
+2025-10-24 16:33:05,416 - INFO - Disconnected from SMTP server
+2025-10-24 16:38:48,465 - INFO - Starting email automation...
+2025-10-24 16:38:49,030 - INFO - SUCCESS: Connected to SMTP server successfully
+2025-10-24 16:38:49,032 - INFO - Loaded 4 recipients
+2025-10-24 16:38:49,033 - INFO - Processing 1/4: othmane.student@gmail.com
+2025-10-24 16:38:50,350 - INFO - SUCCESS: Email sent to othmane.student@gmail.com (Karim)
+2025-10-24 16:38:50,350 - INFO - Waiting 58s before next email...
+2025-10-24 16:39:48,351 - INFO - Processing 2/4: student.chaikhi@gmail.com
+2025-10-24 16:39:50,268 - INFO - SUCCESS: Email sent to student.chaikhi@gmail.com (Sara)
+2025-10-24 16:39:50,270 - INFO - Waiting 82s before next email...
+2025-10-24 16:41:12,273 - INFO - Processing 3/4: othmane.chaikhi@emsi-edu.ma
+2025-10-24 16:41:14,196 - INFO - SUCCESS: Email sent to othmane.chaikhi@emsi-edu.ma (Ahmed)
+2025-10-24 16:41:14,197 - INFO - Waiting 53s before next email...
+2025-10-24 16:42:07,198 - INFO - Processing 4/4: recruitment@techcorp.com
+2025-10-24 16:42:08,505 - INFO - SUCCESS: Email sent to recruitment@techcorp.com (Marie)
+2025-10-24 16:42:08,506 - INFO - Campaign completed!
+2025-10-24 16:42:08,508 - INFO - Sent: 4, Failed: 0
+2025-10-24 16:42:08,549 - INFO - Disconnected from SMTP server
+2025-10-24 16:44:25,799 - INFO - Starting email automation...
+2025-10-24 16:44:26,435 - INFO - SUCCESS: Connected to SMTP server successfully
+2025-10-24 16:44:26,437 - INFO - Loaded 4 recipients
+2025-10-24 16:44:26,438 - INFO - Processing 1/4: othmane.student@gmail.com
+2025-10-24 16:44:28,223 - INFO - SUCCESS: Email sent to othmane.student@gmail.com (Karim)
+2025-10-24 16:44:28,223 - INFO - Waiting 58s before next email...
+2025-10-24 16:45:26,224 - INFO - Processing 2/4: student.chaikhi@gmail.com
+2025-10-24 16:45:28,105 - INFO - SUCCESS: Email sent to student.chaikhi@gmail.com (Sara)
+2025-10-24 16:45:28,106 - INFO - Waiting 49s before next email...
+2025-10-24 16:46:17,111 - INFO - Processing 3/4: othmane.chaikhi@emsi-edu.ma
+2025-10-24 16:46:19,690 - INFO - SUCCESS: Email sent to othmane.chaikhi@emsi-edu.ma (Ahmed)
+2025-10-24 16:46:19,690 - INFO - Waiting 56s before next email...
+2025-10-24 16:47:15,691 - INFO - Processing 4/4: recruitment@techcorp.com
+2025-10-24 16:47:17,016 - INFO - SUCCESS: Email sent to recruitment@techcorp.com (Marie)
+2025-10-24 16:47:17,017 - INFO - Campaign completed!
+2025-10-24 16:47:17,018 - INFO - Sent: 4, Failed: 0
+2025-10-24 16:47:17,069 - INFO - Disconnected from SMTP server
+2025-10-24 16:56:24,836 - INFO - Starting email automation...
+2025-10-24 16:56:25,383 - INFO - SUCCESS: Connected to SMTP server successfully
+2025-10-24 16:56:25,384 - INFO - Loaded 2 recipients
+2025-10-24 16:56:25,385 - INFO - Processing 1/2: student.chaikhi@gmail.com
+2025-10-24 16:56:27,137 - INFO - SUCCESS: Email sent to student.chaikhi@gmail.com (othmane chaikhi)
+2025-10-24 16:56:27,138 - INFO - Waiting 81s before next email...
+2025-10-24 16:57:48,140 - INFO - Processing 2/2: othmane.chaikhi@emsi-edu.ma
+2025-10-24 16:57:50,169 - INFO - SUCCESS: Email sent to othmane.chaikhi@emsi-edu.ma (Ahmed)
+2025-10-24 16:57:50,170 - INFO - Campaign completed!
+2025-10-24 16:57:50,171 - INFO - Sent: 2, Failed: 0
+2025-10-24 16:57:50,210 - INFO - Disconnected from SMTP server
+2025-10-24 17:01:21,111 - INFO - Starting email automation...
+2025-10-24 17:01:21,676 - INFO - SUCCESS: Connected to SMTP server successfully
+2025-10-24 17:01:21,678 - INFO - Loaded 1 recipients
+2025-10-24 17:01:21,679 - INFO - Processing 1/1: oth.digitalservices@gmail.com
+2025-10-24 17:01:23,405 - INFO - SUCCESS: Email sent to oth.digitalservices@gmail.com (othmane chaikhi)
+2025-10-24 17:01:23,406 - INFO - Campaign completed!
+2025-10-24 17:01:23,407 - INFO - Sent: 1, Failed: 0
+2025-10-24 17:01:23,446 - INFO - Disconnected from SMTP server

@@ -1,0 +1,16 @@
+# Email Automation Script Requirements
+# Install with: pip install -r requirements.txt
+
+# Core Python libraries (usually included with Python)
+# smtplib - Built-in
+# csv - Built-in  
+# time - Built-in
+# random - Built-in
+# logging - Built-in
+# os - Built-in
+# datetime - Built-in
+# email - Built-in
+# typing - Built-in
+
+# No external dependencies required!
+# This script uses only Python standard library modules.

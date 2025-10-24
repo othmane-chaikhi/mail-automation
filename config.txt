@@ -1,0 +1,28 @@
+# Email Automation Configuration
+# Replace the values below with your actual information
+
+# Your Gmail credentials
+email=othmanechaikhi.pro@gmail.com
+app_password=tytacttnftiurzlz
+
+
+# SMTP Settings (usually don't need to change)
+smtp_server=smtp.gmail.com
+smtp_port=587
+
+# File paths
+cv_path=CV_Othmane_Chaikhi.pdf
+recipients_file=recipients.csv
+
+# Timing settings (in seconds)
+min_delay=40
+max_delay=90
+
+# Safety limits
+max_emails_per_day=30
+
+# Instructions:
+# 1. Replace 'your_app_password_here' with your Gmail App Password
+# 2. Make sure your CV file exists at the specified path
+# 3. Update the recipients.csv file with your target emails
+# 4. Adjust timing settings as needed (40-90 seconds is recommended)
