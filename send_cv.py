@@ -71,13 +71,24 @@ class EmailAutomation:
         return random.choice(subjects)
     
     def get_random_greeting(self, name: str) -> str:
-        """Get a consistent greeting for personalized feel."""
+        """Get a consistent greeting for personalized feel.
+
+        If name is empty or None, return a generic greeting.
+        """
+        if not name:
+            return "Bonjour,"
         return f"Bonjour {name},"
     
     def create_html_email(self, name: str, company: str) -> str:
-        """Create a professional HTML email template."""
+        """Create a professional HTML email template.
+
+        Name and company may be empty strings. Templates adapt gracefully.
+        """
         greeting = self.get_random_greeting(name)
-        
+
+        # If company is provided, mention it; otherwise keep the sentence generic
+        company_sentence = (f" au sein de <strong>{company}</strong>" if company else "")
+
         html_content = f"""
         <!DOCTYPE html>
         <html>
@@ -106,7 +117,7 @@ class EmailAutomation:
                 <div class="content">
                     <p>{greeting}</p>
                     
-                    <p>Je me permets de vous contacter afin de vous présenter ma candidature pour un stage de fin d'études (PFE) en développement web, intelligence artificielle, data ou testing au sein de <strong>{company}</strong>.</p>
+                    <p>Je me permets de vous contacter afin de vous présenter ma candidature pour un stage de fin d'études (PFE) en développement web, intelligence artificielle, data ou testing{company_sentence}.</p>
                     
                     <div class="highlight">
                         <p><strong>Je m'appelle Othmane Chaikhi</strong>, étudiant en cycle ingénieur en Informatique et Réseaux (MIAGE) à l'EMSI Rabat (2023–2026).</p>
@@ -145,11 +156,13 @@ class EmailAutomation:
     def create_text_email(self, name: str, company: str) -> str:
         """Create a plain text email template."""
         greeting = self.get_random_greeting(name)
-        
+        # Only mention company explicitly if provided
+        company_sentence = (f" au sein de {company}" if company else "")
+
         text_content = f"""
 {greeting}
 
-Je me permets de vous contacter afin de vous présenter ma candidature pour un stage de fin d'études (PFE) en développement web, intelligence artificielle, data ou testing au sein de {company}.
+Je me permets de vous contacter afin de vous présenter ma candidature pour un stage de fin d'études (PFE) en développement web, intelligence artificielle, data ou testing{company_sentence}.
 
 Je m'appelle Othmane Chaikhi, étudiant en cycle ingénieur en Informatique et Réseaux (MIAGE) à l'EMSI Rabat (2023–2026).
 Passionné par le développement et les technologies émergentes, j'ai réalisé plusieurs projets académiques et freelances, notamment :
@@ -193,15 +206,18 @@ Othmane Chaikhi
             # Create main message container
             msg = MIMEMultipart('mixed')
             msg['From'] = self.config['email']
-            msg['To'] = recipient['email']
+            msg['To'] = recipient.get('email', '')
             msg['Subject'] = self.get_random_subject()
             
             # Create alternative container for text and HTML
             alternative = MIMEMultipart('alternative')
             
             # Create text and HTML versions
-            text_content = self.create_text_email(recipient['name'], recipient['company'])
-            html_content = self.create_html_email(recipient['name'], recipient['company'])
+            name = recipient.get('name', '') or ''
+            company = recipient.get('company', '') or ''
+
+            text_content = self.create_text_email(name, company)
+            html_content = self.create_html_email(name, company)
             
             # Attach both versions to alternative container
             text_part = MIMEText(text_content, 'plain', 'utf-8')
@@ -230,7 +246,9 @@ Othmane Chaikhi
             # Send email
             self.server.send_message(msg)
             self.sent_count += 1
-            logger.info(f"SUCCESS: Email sent to {recipient['email']} ({recipient['name']})")
+            email_addr = recipient.get('email', '')
+            display_name = name if name else email_addr
+            logger.info(f"SUCCESS: Email sent to {email_addr} ({display_name})")
             return True
             
         except Exception as e:
@@ -243,9 +261,48 @@ Othmane Chaikhi
         recipients = []
         try:
             with open(self.config['recipients_file'], 'r', encoding='utf-8') as f:
-                reader = csv.DictReader(f)
-                for row in reader:
-                    recipients.append(row)
+                # Try to detect header. We'll use csv.reader to inspect first row.
+                f.seek(0)
+                sample = f.read(2048)
+                f.seek(0)
+                # If 'email' appears in header (case-insensitive), use DictReader
+                if 'email' in sample.lower().splitlines()[0]:
+                    reader = csv.DictReader(f)
+                    for row in reader:
+                        # Normalize keys and provide defaults
+                        email = (row.get('email') or row.get('Email') or '').strip()
+                        name = (row.get('name') or row.get('Name') or '').strip()
+                        company = (row.get('company') or row.get('Company') or '').strip()
+                        if not email:
+                            # Try to find any field that looks like an email
+                            for v in row.values():
+                                if v and '@' in v:
+                                    email = v.strip()
+                                    break
+                        if email:
+                            recipients.append({'email': email, 'name': name, 'company': company})
+                else:
+                    # No header — fallback: treat each row as either single-column email or csv of email[,name[,company]]
+                    reader = csv.reader(f)
+                    for row in reader:
+                        if not row:
+                            continue
+                        # Trim whitespace
+                        row = [col.strip() for col in row]
+                        # First column should be email
+                        email = row[0] if row and row[0] else ''
+                        name = row[1] if len(row) > 1 else ''
+                        company = row[2] if len(row) > 2 else ''
+                        # If the first cell doesn't look like an email, try to find one
+                        if '@' not in email:
+                            found = ''
+                            for col in row:
+                                if '@' in col:
+                                    found = col
+                                    break
+                            email = found
+                        if email:
+                            recipients.append({'email': email, 'name': name, 'company': company})
             logger.info(f"Loaded {len(recipients)} recipients")
         except FileNotFoundError:
             logger.error(f"ERROR: Recipients file not found: {self.config['recipients_file']}")
@@ -305,7 +362,7 @@ Othmane Chaikhi
         try:
             # Send emails
             for i, recipient in enumerate(recipients[start_index:], start=start_index):
-                logger.info(f"Processing {i+1}/{len(recipients)}: {recipient['email']}")
+                logger.info(f"Processing {i+1}/{len(recipients)}: {recipient.get('email', '')}")
                 
                 # Send email
                 success = self.send_email(recipient)

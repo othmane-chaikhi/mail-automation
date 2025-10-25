@@ -129,17 +129,24 @@ def check_recipients():
                 print("ERROR: No recipients found in CSV")
                 return False
             
-            # Check required columns
-            required_columns = ['email', 'name', 'company']
-            missing_columns = [col for col in required_columns if col not in reader.fieldnames]
-            
-            if missing_columns:
-                print(f"ERROR: Missing columns in CSV: {', '.join(missing_columns)}")
-                return False
-            
-            print(f"SUCCESS: Found {len(rows)} recipients")
-            print("SUCCESS: CSV format is correct")
-            return True
+            # Accept either a CSV with headers that include 'email', or a simple one-column CSV
+            fieldnames = reader.fieldnames or []
+            if 'email' in [fn.lower() for fn in fieldnames]:
+                print(f"SUCCESS: Found {len(rows)} recipients")
+                print("SUCCESS: CSV format contains 'email' header")
+                return True
+
+            # If no header or no 'email' header, try reading as simple rows where first column is email
+            f.seek(0)
+            import csv as _csv
+            simple_reader = _csv.reader(f)
+            simple_rows = [r for r in simple_reader if r]
+            if simple_rows and any('@' in (r[0] if r else '') for r in simple_rows):
+                print(f"SUCCESS: Found {len(simple_rows)} recipient rows (email-only CSV)")
+                return True
+
+            print("ERROR: recipients.csv must contain an 'email' column or be a one-column list of emails")
+            return False
             
     except Exception as e:
         print(f"ERROR: Error reading CSV: {e}")
