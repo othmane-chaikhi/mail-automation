@@ -106,3 +106,17 @@
 2025-10-25 23:19:26,022 - INFO - Campaign completed!
 2025-10-25 23:19:26,023 - INFO - Sent: 3, Failed: 0
 2025-10-25 23:19:26,072 - INFO - Disconnected from SMTP server
+2025-10-26 00:04:40,583 - INFO - Starting email automation...
+2025-10-26 00:04:41,349 - INFO - SUCCESS: Connected to SMTP server successfully
+2025-10-26 00:04:41,399 - INFO - Loaded 3 recipients
+2025-10-26 00:04:41,400 - INFO - Processing 1/3: oth.digitalservices@gmail.com
+2025-10-26 00:04:42,988 - INFO - SUCCESS: Email sent to oth.digitalservices@gmail.com (oth.digitalservices@gmail.com)
+2025-10-26 00:04:43,036 - INFO - Waiting 40s before next email...
+2025-10-26 00:05:23,037 - INFO - Processing 2/3: student.chaikhi@gmail.com
+2025-10-26 00:05:24,869 - INFO - SUCCESS: Email sent to student.chaikhi@gmail.com (othmane)
+2025-10-26 00:05:24,871 - INFO - Waiting 73s before next email...
+2025-10-26 00:06:37,872 - INFO - Processing 3/3: othmanechaikhi.pro@gmail.com
+2025-10-26 00:06:39,871 - INFO - SUCCESS: Email sent to othmanechaikhi.pro@gmail.com (othmanechaikhi.pro@gmail.com)
+2025-10-26 00:06:39,873 - INFO - Campaign completed!
+2025-10-26 00:06:39,874 - INFO - Sent: 3, Failed: 0
+2025-10-26 00:06:39,928 - INFO - Disconnected from SMTP server
