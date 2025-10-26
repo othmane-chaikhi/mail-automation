@@ -482,6 +482,13 @@ def clean_template(template: str) -> str:
         template = re.sub(r'\{\s*' + prop + r':', '{{' + prop + ':', template)
         template = re.sub(r'\{\s*' + prop + r'\s*:', '{{' + prop + ':', template)
     
+    # AGGRESSIVE FIX: Handle any remaining CSS-like patterns
+    # This is a catch-all for any CSS property that might cause issues
+    template = re.sub(r'\{\s*([a-zA-Z-]+)\s*:\s*([^}]+)\s*\}', r'{{\1:\2}}', template)
+    
+    # EXTRA AGGRESSIVE: Handle any single braces that might be CSS
+    template = re.sub(r'\{\s*([a-zA-Z-]+)\s*:', r'{{\1:', template)
+    
     return template
 
 def save_recipient_to_file(recipient: Dict):
@@ -833,19 +840,24 @@ def main():
 </body>
 </html>"""
             
-            # Auto-clean templates on every load to prevent issues
+            # FORCE clean templates on every load to prevent issues
             if 'custom_html_template' in st.session_state:
                 current_template = st.session_state['custom_html_template']
+                # Force clean with multiple passes
                 cleaned_template = clean_template(current_template)
+                cleaned_template = clean_template(cleaned_template)
+                cleaned_template = clean_template(cleaned_template)  # Triple pass for safety
+                st.session_state['custom_html_template'] = cleaned_template
                 if current_template != cleaned_template:
-                    st.session_state['custom_html_template'] = cleaned_template
                     st.info("🔧 **Template automatically cleaned to fix CSS conflicts.**")
             
             if 'custom_text_template' in st.session_state:
                 current_template = st.session_state['custom_text_template']
+                # Force clean with multiple passes
                 cleaned_template = clean_template(current_template)
-                if current_template != cleaned_template:
-                    st.session_state['custom_text_template'] = cleaned_template
+                cleaned_template = clean_template(cleaned_template)
+                cleaned_template = clean_template(cleaned_template)  # Triple pass for safety
+                st.session_state['custom_text_template'] = cleaned_template
             
             # Add template management buttons
             col1, col2, col3 = st.columns([2, 1, 1])
@@ -902,17 +914,27 @@ Your Name"""
                     # Clean the current template in session state
                     if 'custom_html_template' in st.session_state:
                         current_template = st.session_state['custom_html_template']
+                        # Multiple cleaning passes
                         cleaned_template = clean_template(current_template)
+                        cleaned_template = clean_template(cleaned_template)
+                        cleaned_template = clean_template(cleaned_template)
                         st.session_state['custom_html_template'] = cleaned_template
                         st.success("✅ HTML template cleaned and fixed!")
                         
                         # Show what was changed
                         if current_template != cleaned_template:
                             st.info("🔍 **Template was automatically cleaned to fix CSS property conflicts.**")
+                            # Show debug info
+                            with st.expander("🔍 Debug: Show template changes"):
+                                st.code("BEFORE:\n" + current_template, language='html')
+                                st.code("AFTER:\n" + cleaned_template, language='html')
                     
                     if 'custom_text_template' in st.session_state:
                         current_template = st.session_state['custom_text_template']
+                        # Multiple cleaning passes
                         cleaned_template = clean_template(current_template)
+                        cleaned_template = clean_template(cleaned_template)
+                        cleaned_template = clean_template(cleaned_template)
                         st.session_state['custom_text_template'] = cleaned_template
                         st.success("✅ Text template cleaned and fixed!")
                     
