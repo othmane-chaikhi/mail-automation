@@ -86,11 +86,23 @@ class EmailAutomation:
             "Candidature spontanée - Stage PFE Développement / IA / Data",
             "Candidature pour un stage PFE - Développement et Intelligence Artificielle"
         ])
+        
+        # Filter out empty subjects and ensure we have at least one
+        subjects = [s for s in subjects if s and s.strip()]
+        if not subjects:
+            subjects = ["Candidature pour un stage PFE"]
+        
         return random.choice(subjects)
     
     def get_random_greeting(self, name: str) -> str:
         """Get a consistent greeting for personalized feel."""
         greetings = self.config.get('greetings', ["Bonjour", "Salut", "Bonjour"])
+        
+        # Filter out empty greetings and ensure we have at least one
+        greetings = [g for g in greetings if g and g.strip()]
+        if not greetings:
+            greetings = ["Bonjour"]
+        
         greeting = random.choice(greetings)
         if not name:
             return f"{greeting},"
@@ -323,17 +335,30 @@ Bien cordialement,
             msg = MIMEMultipart('mixed')
             msg['From'] = self.config['email']
             msg['To'] = recipient.get('email', '')
-            msg['Subject'] = self.get_random_subject()
+            
+            # Get subject with error handling
+            try:
+                subject = self.get_random_subject()
+            except Exception as subject_error:
+                st.error(f"Error getting subject: {str(subject_error)}")
+                subject = "Candidature pour un stage PFE"
+            msg['Subject'] = subject
             
             # Create alternative container for text and HTML
             alternative = MIMEMultipart('alternative')
             
-            # Create text and HTML versions
+            # Create text and HTML versions with error handling
             name = recipient.get('name', '') or ''
             company = recipient.get('company', '') or ''
 
-            text_content = self.create_text_email(name, company)
-            html_content = self.create_html_email(name, company)
+            try:
+                text_content = self.create_text_email(name, company)
+                html_content = self.create_html_email(name, company)
+            except Exception as content_error:
+                st.error(f"Error creating email content: {str(content_error)}")
+                # Use fallback content
+                text_content = f"Dear {name},\n\nYour email content here..."
+                html_content = f"<p>Dear {name},</p><p>Your email content here...</p>"
             
             # Attach both versions to alternative container
             text_part = MIMEText(text_content, 'plain', 'utf-8')
