@@ -782,8 +782,26 @@ def load_recipients_from_csv(csv_content: str) -> List[Dict]:
     
     return recipients
 
+def load_config_file():
+    """Load configuration from config.txt file."""
+    config = {}
+    try:
+        if os.path.exists("config.txt"):
+            with open("config.txt", 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#') and '=' in line:
+                        key, value = line.split('=', 1)
+                        config[key.strip()] = value.strip()
+    except Exception as e:
+        st.warning(f"⚠️ Could not load config.txt: {e}")
+    return config
+
 def main():
     """Main Streamlit application."""
+    
+    # Load config from file
+    file_config = load_config_file()
     
     # Header
     st.markdown('<h1 class="main-header">📧 Email Automation App</h1>', unsafe_allow_html=True)
@@ -811,20 +829,42 @@ def main():
         
         with col1:
             st.subheader("Gmail Settings")
-            email = st.text_input("Gmail Address", placeholder="your.email@gmail.com", key="email_input")
-            app_password = st.text_input("App Password", type="password", placeholder="Your 16-character app password", key="app_password")
+            email = st.text_input("Gmail Address", 
+                                value=file_config.get('email', ''), 
+                                placeholder="your.email@gmail.com", 
+                                key="email_input")
+            app_password = st.text_input("App Password", 
+                                       value=file_config.get('app_password', ''), 
+                                       type="password", 
+                                       placeholder="Your 16-character app password", 
+                                       key="app_password")
             
             st.subheader("SMTP Settings")
-            smtp_server = st.text_input("SMTP Server", value="smtp.gmail.com", help="SMTP server address")
-            smtp_port = st.number_input("SMTP Port", value=587, min_value=1, max_value=65535, help="SMTP server port")
+            smtp_server = st.text_input("SMTP Server", 
+                                      value=file_config.get('smtp_server', 'smtp.gmail.com'), 
+                                      help="SMTP server address")
+            smtp_port = st.number_input("SMTP Port", 
+                                      value=int(file_config.get('smtp_port', 587)), 
+                                      min_value=1, 
+                                      max_value=65535, 
+                                      help="SMTP server port")
         
         with col2:
             st.subheader("Timing Settings")
-            min_delay = st.slider("Minimum Delay (seconds)", 10, 120, 40, help="Minimum time between emails")
-            max_delay = st.slider("Maximum Delay (seconds)", 30, 300, 90, help="Maximum time between emails")
+            min_delay = st.slider("Minimum Delay (seconds)", 
+                                10, 120, 
+                                int(file_config.get('min_delay', 40)), 
+                                help="Minimum time between emails")
+            max_delay = st.slider("Maximum Delay (seconds)", 
+                                30, 300, 
+                                int(file_config.get('max_delay', 90)), 
+                                help="Maximum time between emails")
             
             st.subheader("Safety Limits")
-            max_emails = st.slider("Max Emails Per Day", 5, 100, 30, help="Maximum emails to send in one session")
+            max_emails = st.slider("Max Emails Per Day", 
+                                 5, 100, 
+                                 int(file_config.get('max_emails_per_day', 30)), 
+                                 help="Maximum emails to send in one session")
             
             st.subheader("Email Subjects")
             st.text_area("Subject Lines (one per line)", 
