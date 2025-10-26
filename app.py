@@ -325,25 +325,64 @@ Bien cordialement,
             st.info(f"📧 Using email: {self.config['email']}")
             st.info(f"🔑 App password: {'*' * len(self.config['app_password'])} (length: {len(self.config['app_password'])})")
             
-            # Create SMTP connection
-            self.server = smtplib.SMTP(self.config['smtp_server'], self.config['smtp_port'])
+            # Create SMTP connection with timeout
+            self.server = smtplib.SMTP(self.config['smtp_server'], self.config['smtp_port'], timeout=30)
             self.server.set_debuglevel(1)  # Enable debug output
             
             # Start TLS
             st.info("🔒 Starting TLS encryption...")
             self.server.starttls()
             
-            # Login with credentials
-            st.info("🔐 Authenticating with Gmail...")
-            self.server.login(self.config['email'], self.config['app_password'])
+            # Try different authentication methods
+            st.info("🔐 Attempting authentication...")
+            
+            # Method 1: Direct login
+            try:
+                self.server.login(self.config['email'], self.config['app_password'])
+                st.success("✅ Authentication successful!")
+            except smtplib.SMTPAuthenticationError as auth_error:
+                st.warning("⚠️ Direct authentication failed, trying alternative method...")
+                
+                # Method 2: Try with different encoding
+                try:
+                    # Clear any existing authentication
+                    self.server.quit()
+                    self.server = smtplib.SMTP(self.config['smtp_server'], self.config['smtp_port'], timeout=30)
+                    self.server.starttls()
+                    
+                    # Try with explicit encoding
+                    self.server.login(self.config['email'], self.config['app_password'])
+                    st.success("✅ Authentication successful with alternative method!")
+                except Exception as e2:
+                    st.error(f"❌ Alternative authentication also failed: {e2}")
+                    raise auth_error
             
             st.success("✅ Successfully connected to Gmail!")
             return True
             
         except smtplib.SMTPAuthenticationError as e:
             st.error(f"❌ Authentication failed: {e}")
-            st.error("💡 Make sure you're using an App Password (not your regular Gmail password)")
-            st.error("💡 Ensure 2-Factor Authentication is enabled on your Google account")
+            
+            # Specific troubleshooting for this error
+            st.error("🔧 **Troubleshooting Steps:**")
+            st.error("1. **Generate a NEW App Password:**")
+            st.error("   - Go to https://myaccount.google.com/security")
+            st.error("   - Click 'App passwords' (only visible with 2FA enabled)")
+            st.error("   - Delete the old password and create a new one")
+            st.error("   - Copy the NEW 16-character password")
+            
+            st.error("2. **Check 2-Factor Authentication:**")
+            st.error("   - Ensure 2FA is enabled on your Google account")
+            st.error("   - App passwords only work with 2FA enabled")
+            
+            st.error("3. **Wait and Retry:**")
+            st.error("   - New App passwords can take 5-10 minutes to activate")
+            st.error("   - Try again after a few minutes")
+            
+            st.error("4. **Alternative: Use OAuth2:**")
+            st.error("   - Consider using OAuth2 instead of App passwords")
+            st.error("   - More secure but requires additional setup")
+            
             return False
         except smtplib.SMTPException as e:
             st.error(f"❌ SMTP error: {e}")
