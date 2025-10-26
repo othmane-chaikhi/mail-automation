@@ -427,60 +427,50 @@ def smart_format_template(template: str, **kwargs) -> str:
     """Smart template formatting that handles CSS vs template variables."""
     import re
     
-    # First, identify and protect CSS properties
-    # Find all CSS properties in style blocks and inline styles
-    css_patterns = []
+    # First, ensure CSS is properly formatted
+    # Fix any CSS properties that might have spacing issues
+    template = re.sub(r'(\w+)\s*:\s*', r'\1:', template)
     
-    # Find <style> blocks
-    style_blocks = re.findall(r'<style>(.*?)</style>', template, re.DOTALL)
-    for style_block in style_blocks:
-        # Find all CSS properties in this block
-        css_props = re.findall(r'\{([^}]+)\}', style_block)
-        for css_prop in css_props:
-            css_patterns.append(css_prop)
-    
-    # Find inline styles
-    inline_styles = re.findall(r'style="([^"]*)"', template)
-    for inline_style in inline_styles:
-        # Find CSS properties in inline styles
-        css_props = re.findall(r'\{([^}]+)\}', inline_style)
-        for css_prop in css_props:
-            css_patterns.append(css_prop)
-    
-    # Now format the template, but skip CSS properties
+    # Now format the template, but be very careful with CSS
     try:
         # Create a list of valid template variables
         valid_vars = set(kwargs.keys())
         
-        # Find all template variables in the template
-        template_vars = re.findall(r'\{([^}]+)\}', template)
+        # Find all template variables in the template (outside of style blocks)
+        # We need to be very careful not to touch CSS properties
         
-        # Filter out CSS properties from template variables
-        actual_template_vars = []
+        # First, protect style blocks by temporarily replacing them
+        style_blocks = []
+        def protect_style_block(match):
+            style_blocks.append(match.group(0))
+            return f"__STYLE_BLOCK_{len(style_blocks)-1}__"
+        
+        # Protect <style> blocks
+        protected_template = re.sub(r'<style>.*?</style>', protect_style_block, template, flags=re.DOTALL)
+        
+        # Protect inline styles
+        inline_styles = []
+        def protect_inline_style(match):
+            inline_styles.append(match.group(0))
+            return f"__INLINE_STYLE_{len(inline_styles)-1}__"
+        
+        protected_template = re.sub(r'style="[^"]*"', protect_inline_style, protected_template)
+        
+        # Now find and replace template variables in the protected template
+        template_vars = re.findall(r'\{([^}]+)\}', protected_template)
+        
+        result = protected_template
         for var in template_vars:
-            # Check if this looks like a CSS property
-            is_css = False
-            for css_pattern in css_patterns:
-                if var in css_pattern or css_pattern in var:
-                    is_css = True
-                    break
-            
-            # Also check if it's a known CSS property
-            css_properties = ['font-family', 'line-height', 'color', 'max-width', 'margin', 'padding',
-                            'background-color', 'border-radius', 'text-decoration', 'border',
-                            'width', 'height', 'font-size', 'font-weight', 'text-align']
-            
-            if any(prop in var for prop in css_properties):
-                is_css = True
-            
-            if not is_css and var in valid_vars:
-                actual_template_vars.append(var)
-        
-        # Format only the valid template variables
-        result = template
-        for var in actual_template_vars:
-            if var in kwargs:
+            if var in valid_vars:
                 result = result.replace(f'{{{var}}}', str(kwargs[var]))
+        
+        # Restore style blocks
+        for i, style_block in enumerate(style_blocks):
+            result = result.replace(f"__STYLE_BLOCK_{i}__", style_block)
+        
+        # Restore inline styles
+        for i, inline_style in enumerate(inline_styles):
+            result = result.replace(f"__INLINE_STYLE_{i}__", inline_style)
         
         return result
         
@@ -1051,6 +1041,14 @@ Your Name"""
                         # Debug: Show template content if there's an error
                         if "Template Error:" in html_content:
                             st.markdown("**Debug - Template Content:**")
+                            st.code(html_template, language='html')
+                        
+                        # Debug: Show processed content
+                        with st.expander("🔍 Debug: Show processed HTML"):
+                            st.code(html_content, language='html')
+                        
+                        # Debug: Show original template
+                        with st.expander("🔍 Debug: Show original template"):
                             st.code(html_template, language='html')
                     else:
                         st.warning("No HTML template found. Please create a template first.")
