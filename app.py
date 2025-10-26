@@ -157,17 +157,17 @@ class EmailAutomation:
 <head>
     <meta charset="UTF-8">
     <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background-color: #f8f9fa; padding: 20px; border-radius: 5px; }
-        .content { padding: 20px 0; }
-        .footer { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px; }
-        .signature { margin-top: 20px; }
-        .highlight { background-color: #e3f2fd; padding: 15px; border-radius: 5px; margin: 15px 0; }
-        a { color: #007bff; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-        ul { margin: 10px 0; padding-left: 20px; }
-        li { margin: 5px 0; }
+        body {{font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #f8f9fa; padding: 20px; border-radius: 5px; }}
+        .content {{ padding: 20px 0; }}
+        .footer {{ background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px; }}
+        .signature {{ margin-top: 20px; }}
+        .highlight {{ background-color: #e3f2fd; padding: 15px; border-radius: 5px; margin: 15px 0; }}
+        a {{ color: #007bff; text-decoration: none; }}
+        a:hover {{ text-decoration: underline; }}
+        ul {{ margin: 10px 0; padding-left: 20px; }}
+        li {{ margin: 5px 0; }}
     </style>
 </head>
 <body>
@@ -433,16 +433,23 @@ def clean_template(template: str) -> str:
     # Remove any leading/trailing whitespace that might cause issues
     template = template.strip()
     
-    # Fix common CSS formatting issues
-    template = template.replace('{ font-family', '{font-family')
-    template = template.replace('{ line-height', '{line-height')
-    template = template.replace('{ color', '{color')
-    template = template.replace('{ max-width', '{max-width')
-    template = template.replace('{ margin', '{margin')
-    template = template.replace('{ padding', '{padding')
-    template = template.replace('{ background-color', '{background-color')
-    template = template.replace('{ border-radius', '{border-radius')
-    template = template.replace('{ text-decoration', '{text-decoration')
+    # Fix CSS properties that look like template variables
+    # Replace CSS property syntax with escaped versions
+    template = template.replace('{font-family:', '{{font-family:')
+    template = template.replace('{line-height:', '{{line-height:')
+    template = template.replace('{color:', '{{color:')
+    template = template.replace('{max-width:', '{{max-width:')
+    template = template.replace('{margin:', '{{margin:')
+    template = template.replace('{padding:', '{{padding:')
+    template = template.replace('{background-color:', '{{background-color:')
+    template = template.replace('{border-radius:', '{{border-radius:')
+    template = template.replace('{text-decoration:', '{{text-decoration:')
+    template = template.replace('{border:', '{{border:')
+    template = template.replace('{width:', '{{width:')
+    template = template.replace('{height:', '{{height:')
+    
+    # Also handle the closing braces
+    template = template.replace('; }', '; }}')
     
     return template
 
@@ -771,11 +778,11 @@ def main():
 <head>
     <meta charset="UTF-8">
     <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background-color: #f8f9fa; padding: 20px; border-radius: 5px; }
-        .content { padding: 20px 0; }
-        .footer { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px; }
+        body {{font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #f8f9fa; padding: 20px; border-radius: 5px; }}
+        .content {{ padding: 20px 0; }}
+        .footer {{ background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px; }}
     </style>
 </head>
 <body>
@@ -811,11 +818,11 @@ def main():
 <head>
     <meta charset="UTF-8">
     <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background-color: #f8f9fa; padding: 20px; border-radius: 5px; }
-        .content { padding: 20px 0; }
-        .footer { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px; }
+        body {{font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #f8f9fa; padding: 20px; border-radius: 5px; }}
+        .content {{ padding: 20px 0; }}
+        .footer {{ background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px; }}
     </style>
 </head>
 <body>
