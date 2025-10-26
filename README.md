@@ -1,188 +1,325 @@
-# 📧 Email Automation Script
+# 📧 Email Automation Pro
 
-A Python script that sends personalized emails with human-like behavior to avoid spam filters. Perfect for sending job applications, CVs, or any bulk email campaigns.
+A professional, modern email automation system built with Python and Streamlit. Send personalized emails to multiple recipients with beautiful templates and advanced features.
 
 ## ✨ Features
 
-- 🤖 **Human-like behavior**: Random delays (40-90 seconds) between emails
-- 📝 **Personalized content**: Uses recipient names and company information
-- 🎨 **Professional HTML emails**: Beautiful, responsive email templates
-- 📊 **Progress tracking**: Resume from where you left off if interrupted
-- 🔒 **Safe limits**: Built-in daily email limits to avoid spam
-- 📋 **CSV integration**: Load recipients from a simple CSV file
-- 🛡️ **Error handling**: Comprehensive logging and error recovery
-- ⚙️ **Easy configuration**: Simple text-based configuration
+### 🔐 **Secure Email Integration**
+- **Multiple Providers**: Gmail, Outlook, Yahoo, Custom SMTP
+- **App Password Support**: Secure authentication for Gmail
+- **Connection Testing**: Test your email configuration before sending
+- **Robust Error Handling**: Clear error messages and troubleshooting
+
+### 📧 **Professional Email System**
+- **Beautiful Templates**: HTML and text email templates
+- **Attachment Support**: Send CVs and documents
+- **Smart Delays**: Configurable timing between emails
+- **Preview Function**: See emails before sending
+- **Multiple Subjects**: Rotate between different subject lines
+
+### 👥 **Advanced Recipient Management**
+- **Manual Addition**: Add recipients one by one
+- **CSV Import**: Bulk import from spreadsheets
+- **Recipient Database**: Persistent storage with metadata
+- **Easy Management**: View, edit, delete recipients
+- **Company Tracking**: Track unique companies and positions
+
+### 📊 **Analytics & Statistics**
+- **Real-time Metrics**: Track recipients, companies, templates
+- **Sending Statistics**: Monitor email campaign results
+- **Company Distribution**: Visualize recipient distribution
+- **Contact History**: Track when recipients were last contacted
+
+### 🎨 **Modern User Interface**
+- **Responsive Design**: Works on desktop and mobile
+- **Professional Styling**: Clean, modern interface
+- **Tabbed Navigation**: Organized sections
+- **Real-time Feedback**: Progress tracking and status updates
+- **Dark/Light Theme**: Automatic theme detection
 
 ## 🚀 Quick Start
 
-### 1. Setup Gmail App Password
+### 1. **Installation**
 
-1. Go to your [Google Account settings](https://myaccount.google.com/)
-2. Navigate to **Security** → **2-Step Verification** (enable if not already)
-3. Go to **App passwords** and generate a new app password
-4. Copy the 16-character password (you'll need this for `config.txt`)
+```bash
+# Clone or download the project
+git clone <repository-url>
+cd email-automation
 
-### 2. Configure the Script
-
-Edit `config.txt` with your information:
-
-```txt
-email=your_email@gmail.com
-app_password=your_16_character_app_password
-cv_path=your_cv_file.pdf
+# Install dependencies
+pip install -r requirements.txt
 ```
 
-### 3. Add Recipients
+### 2. **Launch Application**
 
-Edit `recipients.csv` with your target emails:
+```bash
+# Simple launcher (recommended)
+python launch.py
 
+# Or directly with Streamlit
+streamlit run email_automation.py
+```
+
+### 3. **Configure Email**
+
+1. **Go to Configuration Tab**
+2. **Select Email Provider** (Gmail, Outlook, Yahoo, Custom)
+3. **Enter Email Address** and Password/App Password
+4. **Test Connection** to verify settings
+5. **Save Configuration**
+
+### 4. **Add Recipients**
+
+1. **Go to Recipients Tab**
+2. **Add Manually** or **Import CSV**
+3. **View and Manage** your recipient list
+
+### 5. **Send Emails**
+
+1. **Go to Send Emails Tab**
+2. **Choose Template** and Subject
+3. **Preview Email** before sending
+4. **Start Sending** your campaign
+
+## 📁 Project Structure
+
+```
+email-automation/
+├── email_automation.py    # Main application
+├── launch.py             # Simple launcher
+├── requirements.txt      # Dependencies
+├── README.md            # This file
+├── config.json          # Configuration (auto-created)
+├── recipients.json      # Recipients database (auto-created)
+├── templates.json       # Email templates (auto-created)
+└── CV_Othmane_Chaikhi.pdf # Your CV (optional)
+```
+
+## ⚙️ Configuration
+
+### **Email Providers**
+
+| Provider | SMTP Server | Port | Security |
+|----------|-------------|------|----------|
+| Gmail | smtp.gmail.com | 587 | TLS |
+| Outlook | smtp-mail.outlook.com | 587 | TLS |
+| Yahoo | smtp.mail.yahoo.com | 587 | TLS |
+| Custom | Your server | Your port | Your choice |
+
+### **Gmail Setup**
+
+1. **Enable 2-Factor Authentication**
+2. **Generate App Password**:
+   - Go to [Google Account Security](https://myaccount.google.com/security)
+   - Click "App passwords"
+   - Generate a new 16-character password
+3. **Use App Password** (not your regular password)
+
+### **Configuration File**
+
+The app automatically creates `config.json`:
+
+```json
+{
+  "email": "your.email@gmail.com",
+  "password": "your_app_password",
+  "provider": "gmail",
+  "smtp_server": "smtp.gmail.com",
+  "smtp_port": 587,
+  "min_delay": 30,
+  "max_delay": 60,
+  "max_emails_per_day": 50,
+  "subjects": ["Subject 1", "Subject 2"],
+  "greetings": ["Bonjour", "Salut"]
+}
+```
+
+## 👥 Managing Recipients
+
+### **Manual Addition**
+
+1. Go to **Recipients Tab**
+2. Fill in the form:
+   - **Email**: Required
+   - **Name**: Optional
+   - **Company**: Optional
+   - **Position**: Optional
+   - **Notes**: Optional
+3. Click **Add Recipient**
+
+### **CSV Import**
+
+Create a CSV with these columns:
 ```csv
-email,name,company
-hr@company1.com,John,Company 1
-contact@company2.com,Jane,Company 2
+email,name,company,position,notes
+john@company.com,John Doe,Tech Company,HR Manager,Interested in AI
+jane@startup.io,Jane Smith,Startup Inc,CTO,Looking for developers
 ```
 
-### 4. Run the Script
+### **Recipient Management**
 
-**Option A: Double-click `send_cv.bat`** (Windows)
-**Option B: Run directly** `python send_cv.py`
+- **View All**: See all recipients in expandable cards
+- **Edit**: Click edit button to modify recipient info
+- **Delete**: Remove recipients you no longer need
+- **Status Tracking**: Track when recipients were last contacted
 
-## 📁 File Structure
+## 📧 Email Templates
 
-```
-mailAutomation/
-├── send_cv.py          # Main Python script
-├── send_cv.bat         # Windows batch file for easy execution
-├── config.txt          # Configuration file
-├── recipients.csv      # List of email recipients
-├── email_log.txt       # Log file (created automatically)
-└── README.md          # This file
-```
+### **Default Template**
 
-## ⚙️ Configuration Options
+The app includes a professional HTML template with:
+- **Modern Design**: Clean, responsive layout
+- **Personalization**: Name, company, email placeholders
+- **Professional Content**: Stage PFE application content
+- **Contact Information**: Your details and portfolio
 
-### config.txt Settings
+### **Template Variables**
 
-| Setting | Description | Default |
-|---------|-------------|---------|
-| `email` | Your Gmail address | Required |
-| `app_password` | Gmail App Password | Required |
-| `cv_path` | Path to your CV file | `CV_Othmane_Chaikhi.pdf` |
-| `recipients_file` | CSV file with recipients | `recipients.csv` |
-| `min_delay` | Minimum delay between emails (seconds) | `40` |
-| `max_delay` | Maximum delay between emails (seconds) | `90` |
-| `max_emails_per_day` | Daily email limit | `30` |
+- `{name}`: Recipient's name
+- `{company}`: Recipient's company
+- `{email}`: Your email address
 
-### recipients.csv Format
+### **Custom Templates**
 
-```csv
-email,name,company
-recipient1@example.com,John Doe,Company A
-recipient2@example.com,Jane Smith,Company B
-```
+You can create custom templates by modifying the `TemplateManager` class.
 
-## 🎯 Email Features
+## 📊 Statistics & Analytics
 
-### Random Subject Lines
-The script automatically uses one of these subject lines:
-- "Demande de stage PFE – Développement Web"
-- "Candidature pour stage PFE - Développement Web"
-- "Proposition de stage PFE - Développement Web"
-- "Candidature spontanée - Stage PFE Développement"
-- "Demande de stage - Développement Web Full Stack"
+### **Real-time Metrics**
 
-### Professional HTML Template
-- Responsive design that works on all email clients
-- Professional styling with your branding
-- Both HTML and plain text versions
-- Automatic CV attachment
+- **Total Recipients**: Number of people in your database
+- **Unique Companies**: Number of different companies
+- **Email Templates**: Number of available templates
+- **App Status**: Current application status
 
-### Human-like Behavior
-- Random delays between emails (40-90 seconds)
-- Random greeting variations
-- Natural email flow
-- Resume capability if interrupted
+### **Detailed Analytics**
 
-## 📊 Monitoring & Logs
+- **Recipients Overview**: Complete list with metadata
+- **Company Distribution**: Bar chart of company distribution
+- **Contact History**: Track when recipients were contacted
+- **Sending Results**: Success/failure rates
 
-### Log Files
-- `email_log.txt`: Detailed log of all activities
-- `email_progress.txt`: Progress tracking
+## 🛡️ Security Features
 
-### Log Information
-- ✅ Successful sends
-- ❌ Failed sends with error details
-- ⏳ Timing information
-- 📊 Final statistics
+### **Data Protection**
 
-## 🛡️ Safety Features
+- **Local Storage**: All data stored locally on your machine
+- **No External Services**: Direct SMTP connection only
+- **Encrypted Passwords**: Passwords stored securely
+- **Session Management**: Secure session handling
 
-### Spam Prevention
-- **Daily limits**: Maximum 30 emails per day (configurable)
-- **Human timing**: Random delays between emails
-- **Professional content**: Well-formatted, personalized emails
-- **Gmail compliance**: Uses proper SMTP authentication
+### **Email Safety**
 
-### Error Handling
-- **Connection issues**: Automatic retry logic
-- **Invalid emails**: Skip and continue with next
-- **Interruption**: Save progress and resume later
-- **Validation**: Check all files before starting
+- **Rate Limiting**: Configurable delays between emails
+- **Daily Limits**: Maximum emails per day
+- **Error Handling**: Graceful failure handling
+- **Connection Testing**: Verify settings before sending
 
 ## 🔧 Troubleshooting
 
-### Common Issues
+### **Common Issues**
 
-**"Authentication failed"**
-- Check your Gmail App Password (not your regular password)
-- Ensure 2-Factor Authentication is enabled
-- Verify the email address in config.txt
+#### **Gmail Authentication Failed**
+1. **Check 2FA**: Ensure 2-Factor Authentication is enabled
+2. **App Password**: Use 16-character App Password, not regular password
+3. **Wait Time**: New App Passwords can take 5-10 minutes to activate
+4. **Test Connection**: Use the test button to verify
 
-**"File not found"**
-- Check that `recipients.csv` exists
-- Verify CV file path in config.txt
-- Ensure all files are in the same directory
+#### **Connection Refused**
+1. **Internet**: Check your internet connection
+2. **Firewall**: Ensure SMTP ports are not blocked
+3. **Provider Settings**: Verify SMTP server and port
+4. **Credentials**: Double-check email and password
 
-**"No recipients found"**
-- Check CSV format (comma-separated)
-- Ensure first row has headers: `email,name,company`
-- Verify file encoding (UTF-8)
+#### **Emails Not Sending**
+1. **Recipients**: Ensure you have recipients added
+2. **Configuration**: Check your email configuration
+3. **Templates**: Verify email templates are loaded
+4. **Attachments**: Check attachment file paths
 
-### Getting Help
+### **Debug Information**
 
-1. Check `email_log.txt` for detailed error messages
-2. Verify all configuration settings
-3. Test with a small recipient list first
-4. Ensure your Gmail account is in good standing
+The app provides debug information in the Configuration tab:
+- **Config File Email**: What's loaded from config
+- **Form Email**: What's in the form fields
+- **Connection Details**: SMTP server and port being used
 
-## 📈 Best Practices
+## 🚀 Advanced Features
 
-### Email Volume
-- **Start small**: Test with 5-10 emails first
-- **Daily limits**: Stay under 30 emails per day
-- **Spread out**: Don't send all emails at once
+### **Multiple Email Providers**
 
-### Content Quality
-- **Personalize**: Use recipient names and company info
-- **Professional**: Keep content relevant and well-written
-- **Attachments**: Only attach necessary files (CV, portfolio)
+Switch between different email providers:
+- **Gmail**: Most popular, requires App Password
+- **Outlook**: Microsoft's email service
+- **Yahoo**: Yahoo Mail support
+- **Custom**: Your own SMTP server
 
-### Technical
-- **Test first**: Always test with your own email
-- **Monitor logs**: Check email_log.txt regularly
-- **Backup**: Keep copies of your recipient lists
+### **Smart Email Scheduling**
 
-## 🚨 Important Notes
+- **Random Delays**: Prevents spam detection
+- **Configurable Timing**: Set min/max delays
+- **Daily Limits**: Control sending volume
+- **Progress Tracking**: Real-time sending status
 
-- **Gmail limits**: Free Gmail accounts have daily sending limits
-- **Spam filters**: Even with this script, some emails may go to spam
-- **Legal compliance**: Ensure you comply with email marketing laws
-- **Professional use**: This is designed for legitimate business communications
+### **Professional Templates**
+
+- **HTML Format**: Beautiful, responsive emails
+- **Text Format**: Plain text fallback
+- **Personalization**: Dynamic content insertion
+- **Professional Design**: Modern, clean layout
+
+## 📈 Performance
+
+### **Optimizations**
+
+- **Efficient Data Storage**: JSON-based persistence
+- **Lazy Loading**: Load data only when needed
+- **Connection Pooling**: Reuse SMTP connections
+- **Memory Management**: Clean up resources properly
+
+### **Scalability**
+
+- **Large Recipient Lists**: Handle thousands of recipients
+- **Batch Processing**: Send emails in batches
+- **Error Recovery**: Continue after failures
+- **Progress Tracking**: Monitor long-running operations
+
+## 🤝 Support
+
+### **Getting Help**
+
+1. **Check Troubleshooting**: Review common issues
+2. **Debug Information**: Use the debug section
+3. **Test Connection**: Verify your email settings
+4. **Check Logs**: Look for error messages
+
+### **Best Practices**
+
+1. **Test First**: Always test with a small batch
+2. **Use Delays**: Don't send emails too quickly
+3. **Monitor Results**: Check success/failure rates
+4. **Keep Updated**: Update recipients regularly
+
+## 🔄 Updates
+
+### **Version History**
+
+- **v2.0**: Complete rebuild with modern architecture
+- **v1.0**: Initial version with basic features
+
+### **Future Features**
+
+- **Email Scheduling**: Send emails at specific times
+- **A/B Testing**: Test different email versions
+- **Analytics Dashboard**: Advanced reporting
+- **API Integration**: Connect with other tools
 
 ## 📝 License
 
-This script is provided as-is for educational and legitimate business purposes. Users are responsible for complying with all applicable laws and email service terms of service.
+This project is for educational and personal use. Please respect email etiquette and anti-spam laws.
 
 ---
 
-**Happy emailing! 📧✨**
+**Happy Email Automation! 📧✨**
+
+*Built with ❤️ using Python and Streamlit*
