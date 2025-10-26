@@ -98,11 +98,17 @@ class EmailAutomation:
     
     def create_html_email(self, name: str, company: str) -> str:
         """Create a professional HTML email template using configurable content."""
+        template_config = self.config.get('template', {})
+        
+        # Check if using custom template
+        if template_config.get('is_custom', False):
+            return self.create_custom_html_email(name, company)
+        
+        # Use pre-built architecture
         greeting = self.get_random_greeting(name)
         company_sentence = (f" au sein de <strong>{company}</strong>" if company else "")
         
         # Get configurable template content
-        template_config = self.config.get('template', {})
         html_template = template_config.get('html', self.get_default_html_template())
         
         # Replace placeholders
@@ -121,6 +127,32 @@ class EmailAutomation:
         )
         
         return html_content
+    
+    def create_custom_html_email(self, name: str, company: str) -> str:
+        """Create HTML email using custom template."""
+        template_config = self.config.get('template', {})
+        html_template = template_config.get('html', '')
+        
+        if not html_template:
+            return self.get_default_html_template()
+        
+        # Replace variables in custom template
+        greeting = self.get_random_greeting(name)
+        
+        try:
+            html_content = html_template.format(
+                name=name or '',
+                company=company or '',
+                email=self.config.get('email', ''),
+                greeting=greeting
+            )
+            return html_content
+        except KeyError as e:
+            st.error(f"Template error: Variable {e} not found in template")
+            return html_template
+        except Exception as e:
+            st.error(f"Template error: {e}")
+            return html_template
     
     def get_default_html_template(self) -> str:
         """Default HTML template."""
@@ -195,11 +227,17 @@ class EmailAutomation:
     
     def create_text_email(self, name: str, company: str) -> str:
         """Create a plain text email template using configurable content."""
+        template_config = self.config.get('template', {})
+        
+        # Check if using custom template
+        if template_config.get('is_custom', False):
+            return self.create_custom_text_email(name, company)
+        
+        # Use pre-built architecture
         greeting = self.get_random_greeting(name)
         company_sentence = (f" au sein de {company}" if company else "")
         
         # Get configurable template content
-        template_config = self.config.get('template', {})
         text_template = template_config.get('text', self.get_default_text_template())
         
         # Replace placeholders
@@ -218,6 +256,32 @@ class EmailAutomation:
         )
         
         return text_content.strip()
+    
+    def create_custom_text_email(self, name: str, company: str) -> str:
+        """Create text email using custom template."""
+        template_config = self.config.get('template', {})
+        text_template = template_config.get('text', '')
+        
+        if not text_template:
+            return self.get_default_text_template()
+        
+        # Replace variables in custom template
+        greeting = self.get_random_greeting(name)
+        
+        try:
+            text_content = text_template.format(
+                name=name or '',
+                company=company or '',
+                email=self.config.get('email', ''),
+                greeting=greeting
+            )
+            return text_content.strip()
+        except KeyError as e:
+            st.error(f"Template error: Variable {e} not found in template")
+            return text_template
+        except Exception as e:
+            st.error(f"Template error: {e}")
+            return text_template
     
     def get_default_text_template(self) -> str:
         """Default text template."""
@@ -581,10 +645,21 @@ def main():
     with tab2:
         st.header("📝 Email Template Editor")
         
-        # Template configuration
-        template_config = {}
+        # Template type selection
+        st.subheader("🎨 Choose Template Type")
+        template_type = st.radio(
+            "Select template approach:",
+            ["🏗️ Use Pre-built Architecture (Recommended)", "🎨 Create Custom Template"],
+            key="template_type_radio"
+        )
         
-        col1, col2 = st.columns(2)
+        if template_type == "🏗️ Use Pre-built Architecture (Recommended)":
+            st.info("💡 **Pre-built Architecture**: Use our structured template with customizable fields for professional job application emails.")
+            
+            # Template configuration
+            template_config = {}
+            
+            col1, col2 = st.columns(2)
         
         with col1:
             st.subheader("Personal Information")
@@ -653,6 +728,149 @@ def main():
             text_content = automation.create_text_email(sample_name, sample_company)
             st.markdown("**Text Preview:**")
             st.text_area("Plain Text Version", text_content, height=300, disabled=True)
+        
+        else:  # Custom Template
+            st.info("🎨 **Custom Template**: Create your own email template from scratch with full control over content and formatting.")
+            
+            # Custom template editor
+            st.subheader("📝 Custom Template Editor")
+            
+            # Template format selection
+            template_format = st.radio(
+                "Choose template format:",
+                ["📄 HTML Template", "📝 Text Template", "🔄 Both HTML & Text"],
+                key="custom_template_format"
+            )
+            
+            # Initialize custom template in session state
+            if 'custom_html_template' not in st.session_state:
+                st.session_state['custom_html_template'] = """<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #f8f9fa; padding: 20px; border-radius: 5px; }
+        .content { padding: 20px 0; }
+        .footer { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Your Email Subject</h2>
+        </div>
+        <div class="content">
+            <p>Dear {name},</p>
+            <p>Your custom email content here...</p>
+            <p>You can use variables like {name}, {company}, {email} in your template.</p>
+        </div>
+        <div class="footer">
+            <p>Best regards,<br>Your Name</p>
+        </div>
+    </div>
+</body>
+</html>"""
+            
+            if 'custom_text_template' not in st.session_state:
+                st.session_state['custom_text_template'] = """Dear {name},
+
+Your custom email content here...
+
+You can use variables like {name}, {company}, {email} in your template.
+
+Best regards,
+Your Name"""
+            
+            # HTML Template Editor
+            if template_format in ["📄 HTML Template", "🔄 Both HTML & Text"]:
+                st.subheader("📄 HTML Template")
+                st.markdown("**Available variables:** `{name}`, `{company}`, `{email}`, `{greeting}`")
+                
+                html_template = st.text_area(
+                    "HTML Template:",
+                    value=st.session_state['custom_html_template'],
+                    height=400,
+                    key="custom_html_editor",
+                    help="Write your HTML email template. Use variables like {name}, {company} for personalization."
+                )
+                st.session_state['custom_html_template'] = html_template
+            
+            # Text Template Editor
+            if template_format in ["📝 Text Template", "🔄 Both HTML & Text"]:
+                st.subheader("📝 Text Template")
+                st.markdown("**Available variables:** `{name}`, `{company}`, `{email}`, `{greeting}`")
+                
+                text_template = st.text_area(
+                    "Text Template:",
+                    value=st.session_state['custom_text_template'],
+                    height=300,
+                    key="custom_text_editor",
+                    help="Write your plain text email template. Use variables like {name}, {company} for personalization."
+                )
+                st.session_state['custom_text_template'] = text_template
+            
+            # Custom template preview
+            st.markdown("---")
+            st.subheader("📄 Custom Template Preview")
+            
+            if st.button("🔄 Generate Custom Preview", key="custom_preview_btn"):
+                # Create preview configuration for custom template
+                custom_config = {
+                    'email': email or 'your.email@example.com',
+                    'template': {
+                        'html': st.session_state.get('custom_html_template', ''),
+                        'text': st.session_state.get('custom_text_template', ''),
+                        'is_custom': True
+                    },
+                    'subjects': [line.strip() for line in st.session_state.get('subjects_input', '').split('\n') if line.strip()],
+                    'greetings': [line.strip() for line in st.session_state.get('greetings_input', '').split('\n') if line.strip()]
+                }
+                
+                # Generate sample email with custom template
+                sample_name = "John Doe"
+                sample_company = "Tech Company"
+                sample_email = "john@example.com"
+                
+                # Show HTML preview
+                if template_format in ["📄 HTML Template", "🔄 Both HTML & Text"]:
+                    html_content = st.session_state.get('custom_html_template', '').format(
+                        name=sample_name,
+                        company=sample_company,
+                        email=sample_email,
+                        greeting=f"Dear {sample_name}"
+                    )
+                    st.markdown("**HTML Preview:**")
+                    st.components.v1.html(html_content, height=600, scrolling=True)
+                
+                # Show text preview
+                if template_format in ["📝 Text Template", "🔄 Both HTML & Text"]:
+                    text_content = st.session_state.get('custom_text_template', '').format(
+                        name=sample_name,
+                        company=sample_company,
+                        email=sample_email,
+                        greeting=f"Dear {sample_name}"
+                    )
+                    st.markdown("**Text Preview:**")
+                    st.text_area("Plain Text Version", text_content, height=300, disabled=True)
+            
+            # Custom template instructions
+            st.markdown("---")
+            st.subheader("💡 Custom Template Instructions")
+            st.markdown("""
+            **Available Variables:**
+            - `{name}` - Recipient's name
+            - `{company}` - Recipient's company
+            - `{email}` - Recipient's email
+            - `{greeting}` - Personalized greeting
+            
+            **Tips:**
+            - Use HTML tags for formatting in HTML template
+            - Keep text template simple and readable
+            - Test your template with the preview before sending
+            - Variables will be automatically replaced with actual recipient data
+            """)
     
     with tab3:
         st.header("📁 Recipients & Files")
@@ -925,6 +1143,15 @@ def main():
                     'greetings': [line.strip() for line in st.session_state.get('greetings_input', '').split('\n') if line.strip()],
                     'template': template_config
                 }
+                
+                # Handle custom template configuration
+                if st.session_state.get('template_type_radio') == "🎨 Create Custom Template":
+                    custom_template_config = {
+                        'is_custom': True,
+                        'html': st.session_state.get('custom_html_template', ''),
+                        'text': st.session_state.get('custom_text_template', '')
+                    }
+                    config['template'] = custom_template_config
                 
                 # Initialize email automation
                 automation = EmailAutomation(config)
