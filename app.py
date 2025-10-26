@@ -645,6 +645,9 @@ def main():
     with tab2:
         st.header("📝 Email Template Editor")
         
+        # Initialize template_config
+        template_config = {}
+        
         # Template type selection
         st.subheader("🎨 Choose Template Type")
         template_type = st.radio(
@@ -656,78 +659,75 @@ def main():
         if template_type == "🏗️ Use Pre-built Architecture (Recommended)":
             st.info("💡 **Pre-built Architecture**: Use our structured template with customizable fields for professional job application emails.")
             
-            # Template configuration
-            template_config = {}
-            
             col1, col2 = st.columns(2)
+            
+            with col1:
+                st.subheader("Personal Information")
+                template_config['sender_name'] = st.text_input("Your Name", value="Othmane Chaikhi", key="sender_name")
+                template_config['sender_title'] = st.text_area("Your Title/Position", 
+                    value="étudiant en cycle ingénieur en Informatique et Réseaux (MIAGE) à l'EMSI Rabat (2023–2026)",
+                    height=60, key="sender_title")
+                template_config['phone'] = st.text_input("Phone Number", value="+212 631-889579", key="phone")
+                template_config['website'] = st.text_input("Website/Portfolio", value="https://othmanechaikhi.page.gd", key="website")
+                
+                st.subheader("Greetings")
+                greetings_text = st.text_area("Greeting Options (one per line)", 
+                    value="Bonjour\nSalut\nBonjour", 
+                    height=80, key="greetings_input")
+            
+            with col2:
+                st.subheader("Email Content")
+                template_config['objective'] = st.text_area("Your Objective", 
+                    value="Mon objectif est de mettre en pratique mes compétences techniques, d'apprendre auprès de professionnels expérimentés et de contribuer à vos projets innovants dans le domaine du numérique.",
+                    height=80, key="objective")
+                template_config['closing'] = st.text_area("Closing Message", 
+                    value="Je vous remercie sincèrement pour votre temps et votre considération.",
+                    height=60, key="closing")
+                template_config['signature_name'] = st.text_input("Signature Name", value="Othmane Chaikhi", key="signature_name")
+                
+                st.subheader("Projects")
+                projects_text = st.text_area("Your Projects (one per line)", 
+                    value="une application e-commerce complète (Django, SEO) pour une coopérative marocaine\nun tableau de bord RH (Power BI, analyse de données)\ndes applications web avec Spring Boot, Java EE et Django\net des projets d'IA utilisant Python, machine learning et visualisation de données",
+                    height=120, key="projects_input")
         
-        with col1:
-            st.subheader("Personal Information")
-            template_config['sender_name'] = st.text_input("Your Name", value="Othmane Chaikhi", key="sender_name")
-            template_config['sender_title'] = st.text_area("Your Title/Position", 
-                value="étudiant en cycle ingénieur en Informatique et Réseaux (MIAGE) à l'EMSI Rabat (2023–2026)",
-                height=60, key="sender_title")
-            template_config['phone'] = st.text_input("Phone Number", value="+212 631-889579", key="phone")
-            template_config['website'] = st.text_input("Website/Portfolio", value="https://othmanechaikhi.page.gd", key="website")
+            # Preview section
+            st.markdown("---")
+            st.subheader("📄 Email Preview")
             
-            st.subheader("Greetings")
-            greetings_text = st.text_area("Greeting Options (one per line)", 
-                value="Bonjour\nSalut\nBonjour", 
-                height=80, key="greetings_input")
-        
-        with col2:
-            st.subheader("Email Content")
-            template_config['objective'] = st.text_area("Your Objective", 
-                value="Mon objectif est de mettre en pratique mes compétences techniques, d'apprendre auprès de professionnels expérimentés et de contribuer à vos projets innovants dans le domaine du numérique.",
-                height=80, key="objective")
-            template_config['closing'] = st.text_area("Closing Message", 
-                value="Je vous remercie sincèrement pour votre temps et votre considération.",
-                height=60, key="closing")
-            template_config['signature_name'] = st.text_input("Signature Name", value="Othmane Chaikhi", key="signature_name")
-            
-            st.subheader("Projects")
-            projects_text = st.text_area("Your Projects (one per line)", 
-                value="une application e-commerce complète (Django, SEO) pour une coopérative marocaine\nun tableau de bord RH (Power BI, analyse de données)\ndes applications web avec Spring Boot, Java EE et Django\net des projets d'IA utilisant Python, machine learning et visualisation de données",
-                height=120, key="projects_input")
-        
-        # Preview section
-        st.markdown("---")
-        st.subheader("📄 Email Preview")
-        
-        if st.button("🔄 Generate Preview", key="preview_btn"):
-            # Create preview configuration
-            preview_config = {
-                'email': email or 'your.email@example.com',
-                'template': template_config,
-                'subjects': [line.strip() for line in st.session_state.get('subjects_input', '').split('\n') if line.strip()],
-                'greetings': [line.strip() for line in st.session_state.get('greetings_input', '').split('\n') if line.strip()]
-            }
-            
-            # Generate projects HTML
-            projects_html = ""
-            projects_list = [line.strip() for line in st.session_state.get('projects_input', '').split('\n') if line.strip()]
-            for project in projects_list:
-                projects_html += f"<li>{project}</li>\n"
-            
-            preview_config['template']['projects'] = projects_html
-            preview_config['template']['projects_text'] = '\n'.join([f"- {project}" for project in projects_list])
-            
-            # Create automation instance for preview
-            automation = EmailAutomation(preview_config)
-            
-            # Generate sample email
-            sample_name = "John Doe"
-            sample_company = "Tech Company"
-            
-            # Show HTML preview
-            html_content = automation.create_html_email(sample_name, sample_company)
-            st.markdown("**HTML Preview:**")
-            st.components.v1.html(html_content, height=600, scrolling=True)
-            
-            # Show text preview
-            text_content = automation.create_text_email(sample_name, sample_company)
-            st.markdown("**Text Preview:**")
-            st.text_area("Plain Text Version", text_content, height=300, disabled=True)
+            if st.button("🔄 Generate Preview", key="preview_btn"):
+                # Create preview configuration
+                preview_config = {
+                    'email': email or 'your.email@example.com',
+                    'template': template_config,
+                    'subjects': [line.strip() for line in st.session_state.get('subjects_input', '').split('\n') if line.strip()],
+                    'greetings': [line.strip() for line in st.session_state.get('greetings_input', '').split('\n') if line.strip()]
+                }
+                
+                # Generate projects HTML
+                projects_html = ""
+                projects_list = [line.strip() for line in st.session_state.get('projects_input', '').split('\n') if line.strip()]
+                for project in projects_list:
+                    projects_html += f"<li>{project}</li>\n"
+                
+                preview_config['template']['projects'] = projects_html
+                preview_config['template']['projects_text'] = '\n'.join([f"- {project}" for project in projects_list])
+                
+                # Create automation instance for preview
+                automation = EmailAutomation(preview_config)
+                
+                # Generate sample email
+                sample_name = "John Doe"
+                sample_company = "Tech Company"
+                
+                # Show HTML preview
+                html_content = automation.create_html_email(sample_name, sample_company)
+                st.markdown("**HTML Preview:**")
+                st.components.v1.html(html_content, height=600, scrolling=True)
+                
+                # Show text preview
+                text_content = automation.create_text_email(sample_name, sample_company)
+                st.markdown("**Text Preview:**")
+                st.text_area("Plain Text Version", text_content, height=300, disabled=True)
         
         else:  # Custom Template
             st.info("🎨 **Custom Template**: Create your own email template from scratch with full control over content and formatting.")
