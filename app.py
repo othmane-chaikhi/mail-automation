@@ -140,9 +140,10 @@ class EmailAutomation:
         # Replace variables in custom template
         greeting = self.get_random_greeting(name)
         
-        # Use safe formatting
+        # Clean and use safe formatting
+        cleaned_template = clean_template(html_template)
         return safe_format_template(
-            html_template,
+            cleaned_template,
             name=name or '',
             company=company or '',
             email=self.config.get('email', ''),
@@ -262,9 +263,10 @@ class EmailAutomation:
         # Replace variables in custom template
         greeting = self.get_random_greeting(name)
         
-        # Use safe formatting
+        # Clean and use safe formatting
+        cleaned_template = clean_template(text_template)
         return safe_format_template(
-            text_template,
+            cleaned_template,
             name=name or '',
             company=company or '',
             email=self.config.get('email', ''),
@@ -422,6 +424,27 @@ def safe_format_template(template: str, **kwargs) -> str:
     except Exception as e:
         st.error(f"Template error: {e}")
         return f"Template Error: {e}\n\n{template}"
+
+def clean_template(template: str) -> str:
+    """Clean template to remove problematic formatting."""
+    if not template:
+        return template
+    
+    # Remove any leading/trailing whitespace that might cause issues
+    template = template.strip()
+    
+    # Fix common CSS formatting issues
+    template = template.replace('{ font-family', '{font-family')
+    template = template.replace('{ line-height', '{line-height')
+    template = template.replace('{ color', '{color')
+    template = template.replace('{ max-width', '{max-width')
+    template = template.replace('{ margin', '{margin')
+    template = template.replace('{ padding', '{padding')
+    template = template.replace('{ background-color', '{background-color')
+    template = template.replace('{ border-radius', '{border-radius')
+    template = template.replace('{ text-decoration', '{text-decoration')
+    
+    return template
 
 def save_recipient_to_file(recipient: Dict):
     """Save a recipient to the saved recipients file."""
@@ -776,6 +799,13 @@ def main():
             col1, col2 = st.columns([3, 1])
             with col2:
                 if st.button("🔄 Reset Template", key="reset_custom_template"):
+                    # Clear all template-related session state
+                    if 'custom_html_template' in st.session_state:
+                        del st.session_state['custom_html_template']
+                    if 'custom_text_template' in st.session_state:
+                        del st.session_state['custom_text_template']
+                    
+                    # Force clear and reinitialize
                     st.session_state['custom_html_template'] = """<!DOCTYPE html>
 <html>
 <head>
@@ -879,8 +909,9 @@ Your Name"""
                 if template_format in ["📄 HTML Template", "🔄 Both HTML & Text"]:
                     html_template = st.session_state.get('custom_html_template', '')
                     if html_template:
+                        cleaned_template = clean_template(html_template)
                         html_content = safe_format_template(
-                            html_template,
+                            cleaned_template,
                             name=sample_name,
                             company=sample_company,
                             email=sample_email,
@@ -900,8 +931,9 @@ Your Name"""
                 if template_format in ["📝 Text Template", "🔄 Both HTML & Text"]:
                     text_template = st.session_state.get('custom_text_template', '')
                     if text_template:
+                        cleaned_template = clean_template(text_template)
                         text_content = safe_format_template(
-                            text_template,
+                            cleaned_template,
                             name=sample_name,
                             company=sample_company,
                             email=sample_email,
