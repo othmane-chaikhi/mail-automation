@@ -140,8 +140,10 @@ class EmailAutomation:
         # Replace variables in custom template
         greeting = self.get_random_greeting(name)
         
-        # Clean and use safe formatting
+        # Clean and use safe formatting with multiple passes
         cleaned_template = clean_template(html_template)
+        # Double-check with another cleaning pass
+        cleaned_template = clean_template(cleaned_template)
         return safe_format_template(
             cleaned_template,
             name=name or '',
@@ -263,8 +265,10 @@ class EmailAutomation:
         # Replace variables in custom template
         greeting = self.get_random_greeting(name)
         
-        # Clean and use safe formatting
+        # Clean and use safe formatting with multiple passes
         cleaned_template = clean_template(text_template)
+        # Double-check with another cleaning pass
+        cleaned_template = clean_template(cleaned_template)
         return safe_format_template(
             cleaned_template,
             name=name or '',
@@ -435,29 +439,48 @@ def clean_template(template: str) -> str:
     
     import re
     
-    # Handle the entire <style> block by escaping all CSS properties
-    # This is a more comprehensive approach that handles all CSS properties
+    # COMPREHENSIVE CSS VARIABLE FIX
+    # This handles ALL possible CSS property conflicts
     
-    # Find all <style> blocks and escape CSS properties within them
+    # 1. Handle <style> blocks - escape ALL CSS properties
     def escape_style_block(match):
         style_content = match.group(1)
-        # Escape all CSS properties that start with { and end with :
-        # This handles any CSS property, not just the ones we know about
+        # Escape ALL CSS properties that look like template variables
+        # Pattern: {property:value} -> {{property:value}}
         style_content = re.sub(r'\{([^}]+):', r'{{\1:', style_content)
         return f'<style>{style_content}</style>'
     
-    # Apply the escaping to all <style> blocks
+    # Apply to all <style> blocks
     template = re.sub(r'<style>(.*?)</style>', escape_style_block, template, flags=re.DOTALL)
     
-    # Also handle inline styles (style="...")
+    # 2. Handle inline styles - escape ALL CSS properties
     def escape_inline_style(match):
         style_content = match.group(1)
-        # Escape CSS properties in inline styles
+        # Escape ALL CSS properties in inline styles
         style_content = re.sub(r'\{([^}]+):', r'{{\1:', style_content)
         return f'style="{style_content}"'
     
-    # Apply escaping to inline styles
+    # Apply to all inline styles
     template = re.sub(r'style="([^"]*)"', escape_inline_style, template)
+    
+    # 3. Handle any remaining CSS-like patterns that might be template variables
+    # This catches any {property:value} patterns that weren't in style blocks
+    template = re.sub(r'\{([a-zA-Z-]+):([^}]+)\}', r'{{\1:\2}}', template)
+    
+    # 4. Handle specific problematic patterns
+    # Fix common CSS properties that cause issues
+    css_properties = [
+        'font-family', 'line-height', 'color', 'max-width', 'margin', 'padding',
+        'background-color', 'border-radius', 'text-decoration', 'border',
+        'width', 'height', 'font-size', 'font-weight', 'text-align',
+        'display', 'position', 'top', 'left', 'right', 'bottom',
+        'z-index', 'opacity', 'transform', 'transition', 'animation'
+    ]
+    
+    for prop in css_properties:
+        # Handle {property: and { property: patterns
+        template = re.sub(r'\{\s*' + prop + r':', '{{' + prop + ':', template)
+        template = re.sub(r'\{\s*' + prop + r'\s*:', '{{' + prop + ':', template)
     
     return template
 
@@ -809,6 +832,20 @@ def main():
     </div>
 </body>
 </html>"""
+            
+            # Auto-clean templates on every load to prevent issues
+            if 'custom_html_template' in st.session_state:
+                current_template = st.session_state['custom_html_template']
+                cleaned_template = clean_template(current_template)
+                if current_template != cleaned_template:
+                    st.session_state['custom_html_template'] = cleaned_template
+                    st.info("🔧 **Template automatically cleaned to fix CSS conflicts.**")
+            
+            if 'custom_text_template' in st.session_state:
+                current_template = st.session_state['custom_text_template']
+                cleaned_template = clean_template(current_template)
+                if current_template != cleaned_template:
+                    st.session_state['custom_text_template'] = cleaned_template
             
             # Add template management buttons
             col1, col2, col3 = st.columns([2, 1, 1])
