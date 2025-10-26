@@ -433,53 +433,31 @@ def clean_template(template: str) -> str:
     # Remove any leading/trailing whitespace that might cause issues
     template = template.strip()
     
-    # Fix CSS properties that look like template variables
-    # Replace CSS property syntax with escaped versions
-    template = template.replace('{font-family:', '{{font-family:')
-    template = template.replace('{line-height:', '{{line-height:')
-    template = template.replace('{color:', '{{color:')
-    template = template.replace('{max-width:', '{{max-width:')
-    template = template.replace('{margin:', '{{margin:')
-    template = template.replace('{padding:', '{{padding:')
-    template = template.replace('{background-color:', '{{background-color:')
-    template = template.replace('{border-radius:', '{{border-radius:')
-    template = template.replace('{text-decoration:', '{{text-decoration:')
-    template = template.replace('{border:', '{{border:')
-    template = template.replace('{width:', '{{width:')
-    template = template.replace('{height:', '{{height:')
-    
-    # Also handle the closing braces
-    template = template.replace('; }', '; }}')
-    
-    # Handle the specific font-family case with space
-    template = template.replace('{ font-family:', '{{font-family:')
-    template = template.replace('{ line-height:', '{{line-height:')
-    template = template.replace('{ color:', '{{color:')
-    template = template.replace('{ max-width:', '{{max-width:')
-    template = template.replace('{ margin:', '{{margin:')
-    template = template.replace('{ padding:', '{{padding:')
-    template = template.replace('{ background-color:', '{{background-color:')
-    template = template.replace('{ border-radius:', '{{border-radius:')
-    template = template.replace('{ text-decoration:', '{{text-decoration:')
-    template = template.replace('{ border:', '{{border:')
-    template = template.replace('{ width:', '{{width:')
-    template = template.replace('{ height:', '{{height:')
-    
-    # Handle cases where there might be multiple spaces or different spacing
     import re
-    # Use regex to find and replace CSS properties with spaces
-    template = re.sub(r'\{\s+font-family:', '{{font-family:', template)
-    template = re.sub(r'\{\s+line-height:', '{{line-height:', template)
-    template = re.sub(r'\{\s+color:', '{{color:', template)
-    template = re.sub(r'\{\s+max-width:', '{{max-width:', template)
-    template = re.sub(r'\{\s+margin:', '{{margin:', template)
-    template = re.sub(r'\{\s+padding:', '{{padding:', template)
-    template = re.sub(r'\{\s+background-color:', '{{background-color:', template)
-    template = re.sub(r'\{\s+border-radius:', '{{border-radius:', template)
-    template = re.sub(r'\{\s+text-decoration:', '{{text-decoration:', template)
-    template = re.sub(r'\{\s+border:', '{{border:', template)
-    template = re.sub(r'\{\s+width:', '{{width:', template)
-    template = re.sub(r'\{\s+height:', '{{height:', template)
+    
+    # Handle the entire <style> block by escaping all CSS properties
+    # This is a more comprehensive approach that handles all CSS properties
+    
+    # Find all <style> blocks and escape CSS properties within them
+    def escape_style_block(match):
+        style_content = match.group(1)
+        # Escape all CSS properties that start with { and end with :
+        # This handles any CSS property, not just the ones we know about
+        style_content = re.sub(r'\{([^}]+):', r'{{\1:', style_content)
+        return f'<style>{style_content}</style>'
+    
+    # Apply the escaping to all <style> blocks
+    template = re.sub(r'<style>(.*?)</style>', escape_style_block, template, flags=re.DOTALL)
+    
+    # Also handle inline styles (style="...")
+    def escape_inline_style(match):
+        style_content = match.group(1)
+        # Escape CSS properties in inline styles
+        style_content = re.sub(r'\{([^}]+):', r'{{\1:', style_content)
+        return f'style="{style_content}"'
+    
+    # Apply escaping to inline styles
+    template = re.sub(r'style="([^"]*)"', escape_inline_style, template)
     
     return template
 
@@ -890,6 +868,10 @@ Your Name"""
                         cleaned_template = clean_template(current_template)
                         st.session_state['custom_html_template'] = cleaned_template
                         st.success("✅ HTML template cleaned and fixed!")
+                        
+                        # Show what was changed
+                        if current_template != cleaned_template:
+                            st.info("🔍 **Template was automatically cleaned to fix CSS property conflicts.**")
                     
                     if 'custom_text_template' in st.session_state:
                         current_template = st.session_state['custom_text_template']
