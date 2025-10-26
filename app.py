@@ -140,83 +140,74 @@ class EmailAutomation:
         # Replace variables in custom template
         greeting = self.get_random_greeting(name)
         
-        try:
-            html_content = html_template.format(
-                name=name or '',
-                company=company or '',
-                email=self.config.get('email', ''),
-                greeting=greeting
-            )
-            return html_content
-        except KeyError as e:
-            st.error(f"Template error: Variable {e} not found in HTML template")
-            # Return template with error message
-            return f"<p><strong>Template Error:</strong> Variable {e} not found in template.</p><hr>{html_template}"
-        except Exception as e:
-            st.error(f"Template error: {e}")
-            return f"<p><strong>Template Error:</strong> {e}</p><hr>{html_template}"
+        # Use safe formatting
+        return safe_format_template(
+            html_template,
+            name=name or '',
+            company=company or '',
+            email=self.config.get('email', ''),
+            greeting=greeting
+        )
     
     def get_default_html_template(self) -> str:
         """Default HTML template."""
-        return """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <style>
-                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-                .header {{ background-color: #f8f9fa; padding: 20px; border-radius: 5px; }}
-                .content {{ padding: 20px 0; }}
-                .footer {{ background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px; }}
-                .signature {{ margin-top: 20px; }}
-                .highlight {{ background-color: #e3f2fd; padding: 15px; border-radius: 5px; margin: 15px 0; }}
-                a {{ color: #007bff; text-decoration: none; }}
-                a:hover {{ text-decoration: underline; }}
-                ul {{ margin: 10px 0; padding-left: 20px; }}
-                li {{ margin: 5px 0; }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h2 style="color: #007bff; margin: 0;">Candidature Stage PFE</h2>
-                </div>
-                
-                <div class="content">
-                    <p>{greeting}</p>
-                    
-                    <p>Je me permets de vous contacter afin de vous présenter ma candidature pour un stage de fin d'études (PFE) en développement web, intelligence artificielle, data ou testing{company_sentence}.</p>
-                    
-                    <div class="highlight">
-                        <p><strong>Je m'appelle {sender_name}</strong>, {sender_title}.</p>
-                        <p>Passionné par le développement et les technologies émergentes, j'ai réalisé plusieurs projets académiques et freelances, notamment :</p>
-                        <ul>
-                            {projects}
-                        </ul>
-                    </div>
-                    
-                    <p>{objective}</p>
-                    
-                    <p>Vous trouverez ci-joint mon CV, que j'espère retiendra votre attention.<br>
-                    Je serais honoré de pouvoir échanger avec vous au sujet de cette opportunité de stage.</p>
-                    
-                    <p>{closing}</p>
-                </div>
-                
-                <div class="footer">
-                    <div class="signature">
-                        <p><strong>Bien cordialement,</strong><br>
-                        <strong>{signature_name}</strong><br>
-                        📞 {phone}<br>
-                        📧 {email}</p>
-                        <p>🔗 <a href="{website}" target="_blank">{website}</a></p>
-                    </div>
-                </div>
+        return """<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #f8f9fa; padding: 20px; border-radius: 5px; }
+        .content { padding: 20px 0; }
+        .footer { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px; }
+        .signature { margin-top: 20px; }
+        .highlight { background-color: #e3f2fd; padding: 15px; border-radius: 5px; margin: 15px 0; }
+        a { color: #007bff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        ul { margin: 10px 0; padding-left: 20px; }
+        li { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2 style="color: #007bff; margin: 0;">Candidature Stage PFE</h2>
+        </div>
+        
+        <div class="content">
+            <p>{greeting}</p>
+            
+            <p>Je me permets de vous contacter afin de vous présenter ma candidature pour un stage de fin d'études (PFE) en développement web, intelligence artificielle, data ou testing{company_sentence}.</p>
+            
+            <div class="highlight">
+                <p><strong>Je m'appelle {sender_name}</strong>, {sender_title}.</p>
+                <p>Passionné par le développement et les technologies émergentes, j'ai réalisé plusieurs projets académiques et freelances, notamment :</p>
+                <ul>
+                    {projects}
+                </ul>
             </div>
-        </body>
-        </html>
-        """
+            
+            <p>{objective}</p>
+            
+            <p>Vous trouverez ci-joint mon CV, que j'espère retiendra votre attention.<br>
+            Je serais honoré de pouvoir échanger avec vous au sujet de cette opportunité de stage.</p>
+            
+            <p>{closing}</p>
+        </div>
+        
+        <div class="footer">
+            <div class="signature">
+                <p><strong>Bien cordialement,</strong><br>
+                <strong>{signature_name}</strong><br>
+                📞 {phone}<br>
+                📧 {email}</p>
+                <p>🔗 <a href="{website}" target="_blank">{website}</a></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>"""
     
     def get_default_projects(self) -> str:
         """Default projects list."""
@@ -271,21 +262,14 @@ class EmailAutomation:
         # Replace variables in custom template
         greeting = self.get_random_greeting(name)
         
-        try:
-            text_content = text_template.format(
-                name=name or '',
-                company=company or '',
-                email=self.config.get('email', ''),
-                greeting=greeting
-            )
-            return text_content.strip()
-        except KeyError as e:
-            st.error(f"Template error: Variable {e} not found in text template")
-            # Return template with error message
-            return f"Template Error: Variable {e} not found in template.\n\n{text_template}"
-        except Exception as e:
-            st.error(f"Template error: {e}")
-            return f"Template Error: {e}\n\n{text_template}"
+        # Use safe formatting
+        return safe_format_template(
+            text_template,
+            name=name or '',
+            company=company or '',
+            email=self.config.get('email', ''),
+            greeting=greeting
+        ).strip()
     
     def get_default_text_template(self) -> str:
         """Default text template."""
@@ -427,6 +411,17 @@ def logout_admin():
     """Logout admin user."""
     st.session_state['admin_authenticated'] = False
     st.rerun()
+
+def safe_format_template(template: str, **kwargs) -> str:
+    """Safely format a template with error handling."""
+    try:
+        return template.format(**kwargs)
+    except KeyError as e:
+        st.error(f"Template error: Variable {e} not found in template")
+        return f"Template Error: Variable {e} not found in template.\n\n{template}"
+    except Exception as e:
+        st.error(f"Template error: {e}")
+        return f"Template Error: {e}\n\n{template}"
 
 def save_recipient_to_file(recipient: Dict):
     """Save a recipient to the saved recipients file."""
@@ -841,21 +836,15 @@ Your Name"""
                 if template_format in ["📄 HTML Template", "🔄 Both HTML & Text"]:
                     html_template = st.session_state.get('custom_html_template', '')
                     if html_template:
-                        try:
-                            html_content = html_template.format(
-                                name=sample_name,
-                                company=sample_company,
-                                email=sample_email,
-                                greeting=f"Dear {sample_name}"
-                            )
-                            st.markdown("**HTML Preview:**")
-                            st.components.v1.html(html_content, height=600, scrolling=True)
-                        except KeyError as e:
-                            st.error(f"Template error: Variable {e} not found in HTML template")
-                            st.code(html_template, language='html')
-                        except Exception as e:
-                            st.error(f"Template error: {e}")
-                            st.code(html_template, language='html')
+                        html_content = safe_format_template(
+                            html_template,
+                            name=sample_name,
+                            company=sample_company,
+                            email=sample_email,
+                            greeting=f"Dear {sample_name}"
+                        )
+                        st.markdown("**HTML Preview:**")
+                        st.components.v1.html(html_content, height=600, scrolling=True)
                     else:
                         st.warning("No HTML template found. Please create a template first.")
                 
@@ -863,21 +852,15 @@ Your Name"""
                 if template_format in ["📝 Text Template", "🔄 Both HTML & Text"]:
                     text_template = st.session_state.get('custom_text_template', '')
                     if text_template:
-                        try:
-                            text_content = text_template.format(
-                                name=sample_name,
-                                company=sample_company,
-                                email=sample_email,
-                                greeting=f"Dear {sample_name}"
-                            )
-                            st.markdown("**Text Preview:**")
-                            st.text_area("Plain Text Version", text_content, height=300, disabled=True)
-                        except KeyError as e:
-                            st.error(f"Template error: Variable {e} not found in text template")
-                            st.code(text_template, language='text')
-                        except Exception as e:
-                            st.error(f"Template error: {e}")
-                            st.code(text_template, language='text')
+                        text_content = safe_format_template(
+                            text_template,
+                            name=sample_name,
+                            company=sample_company,
+                            email=sample_email,
+                            greeting=f"Dear {sample_name}"
+                        )
+                        st.markdown("**Text Preview:**")
+                        st.text_area("Plain Text Version", text_content, height=300, disabled=True)
                     else:
                         st.warning("No text template found. Please create a template first.")
             
