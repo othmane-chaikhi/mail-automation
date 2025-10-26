@@ -488,16 +488,14 @@ def clean_template(template: str) -> str:
     
     import re
     
-    # NEW APPROACH: Don't escape CSS properties, just ensure they're properly formatted
-    # The issue is that CSS properties are being treated as template variables
-    # We need to keep CSS working but prevent template variable conflicts
+    # Fix double-escaped CSS properties back to single braces
+    # This handles cases where CSS was escaped as {{property:}} instead of {property:}
+    template = re.sub(r'\{\{([^}]+):([^}]+)\}\}', r'{\1:\2}', template)
     
-    # 1. Fix CSS properties that have spaces before the colon
-    # This handles cases like "max-width :" which should be "max-width:"
+    # Fix CSS properties that have spaces before the colon
     template = re.sub(r'(\w+)\s*:\s*', r'\1:', template)
     
-    # 2. Ensure CSS properties are properly formatted
-    # Handle cases where CSS properties might be malformed
+    # Ensure CSS properties are properly formatted
     css_properties = [
         'font-family', 'line-height', 'color', 'max-width', 'margin', 'padding',
         'background-color', 'border-radius', 'text-decoration', 'border',
