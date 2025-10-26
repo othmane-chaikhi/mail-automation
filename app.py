@@ -23,6 +23,7 @@ from typing import List, Dict
 import io
 import re
 import json
+import hashlib
 
 # Configure Streamlit page
 st.set_page_config(
@@ -318,6 +319,47 @@ def validate_email(email: str) -> bool:
     """Simple email validation."""
     return '@' in email and '.' in email.split('@')[1]
 
+def check_admin_access():
+    """Check if user has admin access to saved recipients."""
+    # Load admin password from config file
+    admin_password = "admin123"  # Default password
+    
+    try:
+        if os.path.exists("admin_config.txt"):
+            with open("admin_config.txt", 'r', encoding='utf-8') as f:
+                for line in f:
+                    if line.startswith('admin_password='):
+                        admin_password = line.split('=', 1)[1].strip()
+                        break
+    except Exception:
+        pass  # Use default password if config file can't be read
+    
+    if 'admin_authenticated' not in st.session_state:
+        st.session_state['admin_authenticated'] = False
+    
+    if not st.session_state['admin_authenticated']:
+        with st.sidebar:
+            st.markdown("---")
+            st.subheader("🔐 Admin Access")
+            entered_password = st.text_input("Enter admin password:", type="password", key="admin_password")
+            
+            if st.button("Login", key="admin_login"):
+                if entered_password == admin_password:
+                    st.session_state['admin_authenticated'] = True
+                    st.success("✅ Admin access granted!")
+                    st.rerun()
+                else:
+                    st.error("❌ Invalid password")
+            
+            return False
+    
+    return True
+
+def logout_admin():
+    """Logout admin user."""
+    st.session_state['admin_authenticated'] = False
+    st.rerun()
+
 def save_recipient_to_file(recipient: Dict):
     """Save a recipient to the saved recipients file."""
     try:
@@ -481,8 +523,21 @@ def main():
     # Header
     st.markdown('<h1 class="main-header">📧 Email Automation App</h1>', unsafe_allow_html=True)
     
+    # Check admin access
+    is_admin = check_admin_access()
+    
+    # Show admin info in sidebar
+    if is_admin:
+        with st.sidebar:
+            st.markdown("---")
+            st.success("🔐 **Admin Access Granted**")
+            st.info("You can access saved recipients and admin features.")
+    
     # Create tabs for different sections
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["📧 Email Settings", "📝 Template Editor", "📁 Recipients", "💾 Saved Recipients", "🚀 Send Emails"])
+    if is_admin:
+        tab1, tab2, tab3, tab4, tab5 = st.tabs(["📧 Email Settings", "📝 Template Editor", "📁 Recipients", "💾 Saved Recipients", "🚀 Send Emails"])
+    else:
+        tab1, tab2, tab3, tab4 = st.tabs(["📧 Email Settings", "📝 Template Editor", "📁 Recipients", "🚀 Send Emails"])
     
     with tab1:
         st.header("📧 Email Configuration")
@@ -648,13 +703,14 @@ def main():
                         st.dataframe(df, width='stretch')
                         st.info(f"Found {len(recipients)} valid recipients")
                         
-                        # Save recipients option
-                        if st.button("💾 Save these recipients", key="save_csv_recipients"):
-                            saved_count = 0
-                            for recipient in recipients:
-                                if save_recipient_to_file(recipient):
-                                    saved_count += 1
-                            st.success(f"✅ Saved {saved_count} recipients to your collection!")
+                        # Save recipients option (admin only)
+                        if is_admin:
+                            if st.button("💾 Save these recipients", key="save_csv_recipients"):
+                                saved_count = 0
+                                for recipient in recipients:
+                                    if save_recipient_to_file(recipient):
+                                        saved_count += 1
+                                st.success(f"✅ Saved {saved_count} recipients to your collection!")
                     else:
                         st.error("No valid recipients found in CSV")
                         
@@ -690,104 +746,115 @@ def main():
                     st.dataframe(df, width='stretch')
                     st.info(f"Found {len(recipients)} valid recipients")
                     
-                    # Save recipients option
-                    if st.button("💾 Save these recipients", key="save_text_recipients"):
-                        saved_count = 0
-                        for recipient in recipients:
-                            if save_recipient_to_file(recipient):
-                                saved_count += 1
-                        st.success(f"✅ Saved {saved_count} recipients to your collection!")
+                    # Save recipients option (admin only)
+                    if is_admin:
+                        if st.button("💾 Save these recipients", key="save_text_recipients"):
+                            saved_count = 0
+                            for recipient in recipients:
+                                if save_recipient_to_file(recipient):
+                                    saved_count += 1
+                            st.success(f"✅ Saved {saved_count} recipients to your collection!")
                 else:
                     st.error("No valid recipients found in the text")
             else:
                 st.warning("⚠️ Please enter recipients in the text area")
     
-    with tab4:
-        st.header("💾 Saved Recipients")
-        
-        # Load saved recipients
-        saved_recipients = load_saved_recipients()
-        
-        if saved_recipients:
-            st.subheader(f"📊 Your Saved Recipients ({len(saved_recipients)} total)")
+    if is_admin:
+        with tab4:
+            st.header("💾 Saved Recipients (Admin Only)")
             
-            # Display saved recipients
-            df = pd.DataFrame(saved_recipients)
-            st.dataframe(df, width='stretch')
-            
-            # Actions
-            col1, col2, col3 = st.columns(3)
-            
-            with col1:
-                if st.button("🔄 Use All Saved Recipients", key="use_all_saved"):
-                    st.session_state['selected_recipients'] = saved_recipients
-                    st.success(f"✅ Selected {len(saved_recipients)} recipients for sending!")
-            
+            # Admin logout option
+            col1, col2 = st.columns([3, 1])
             with col2:
-                if st.button("📥 Export as CSV", key="export_saved"):
-                    csv = df.to_csv(index=False)
-                    st.download_button(
-                        label="Download CSV",
-                        data=csv,
-                        file_name=f"saved_recipients_{datetime.now().strftime('%Y%m%d')}.csv",
-                        mime="text/csv"
-                    )
+                if st.button("🚪 Logout Admin", key="logout_admin"):
+                    logout_admin()
             
-            with col3:
-                if st.button("🗑️ Clear All Saved", key="clear_all_saved"):
-                    if os.path.exists("saved_recipients.json"):
-                        os.remove("saved_recipients.json")
-                    st.success("✅ All saved recipients cleared!")
-                    st.rerun()
+            # Load saved recipients
+            saved_recipients = load_saved_recipients()
             
-            # Individual recipient management
-            st.markdown("---")
-            st.subheader("🔧 Manage Individual Recipients")
+            if saved_recipients:
+                st.subheader(f"📊 Your Saved Recipients ({len(saved_recipients)} total)")
             
-            # Select recipient to manage
-            recipient_options = [f"{r.get('name', '')} ({r.get('email', '')})" for r in saved_recipients]
-            if recipient_options:
-                selected_recipient = st.selectbox("Select recipient to manage:", recipient_options, key="manage_recipient")
+                # Display saved recipients
+                df = pd.DataFrame(saved_recipients)
+                st.dataframe(df, width='stretch')
                 
-                if selected_recipient:
-                    # Find the selected recipient
-                    selected_email = selected_recipient.split('(')[-1].rstrip(')')
-                    selected_recipient_data = next((r for r in saved_recipients if r.get('email') == selected_email), None)
+                # Actions
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    if st.button("🔄 Use All Saved Recipients", key="use_all_saved"):
+                        st.session_state['selected_recipients'] = saved_recipients
+                        st.success(f"✅ Selected {len(saved_recipients)} recipients for sending!")
+                
+                with col2:
+                    if st.button("📥 Export as CSV", key="export_saved"):
+                        csv = df.to_csv(index=False)
+                        st.download_button(
+                            label="Download CSV",
+                            data=csv,
+                            file_name=f"saved_recipients_{datetime.now().strftime('%Y%m%d')}.csv",
+                            mime="text/csv"
+                        )
+                
+                with col3:
+                    if st.button("🗑️ Clear All Saved", key="clear_all_saved"):
+                        if os.path.exists("saved_recipients.json"):
+                            os.remove("saved_recipients.json")
+                        st.success("✅ All saved recipients cleared!")
+                        st.rerun()
+                
+                # Individual recipient management
+                st.markdown("---")
+                st.subheader("🔧 Manage Individual Recipients")
+                
+                # Select recipient to manage
+                recipient_options = [f"{r.get('name', '')} ({r.get('email', '')})" for r in saved_recipients]
+                if recipient_options:
+                    selected_recipient = st.selectbox("Select recipient to manage:", recipient_options, key="manage_recipient")
                     
-                    if selected_recipient_data:
-                        col1, col2 = st.columns(2)
+                    if selected_recipient:
+                        # Find the selected recipient
+                        selected_email = selected_recipient.split('(')[-1].rstrip(')')
+                        selected_recipient_data = next((r for r in saved_recipients if r.get('email') == selected_email), None)
                         
-                        with col1:
-                            st.write(f"**Email:** {selected_recipient_data.get('email')}")
-                            st.write(f"**Name:** {selected_recipient_data.get('name', 'N/A')}")
-                            st.write(f"**Company:** {selected_recipient_data.get('company', 'N/A')}")
-                            st.write(f"**Saved:** {selected_recipient_data.get('saved_date', 'N/A')}")
-                        
-                        with col2:
-                            if st.button("📧 Use This Recipient", key="use_single_recipient"):
-                                st.session_state['selected_recipients'] = [selected_recipient_data]
-                                st.success("✅ Selected recipient for sending!")
+                        if selected_recipient_data:
+                            col1, col2 = st.columns(2)
                             
-                            if st.button("🗑️ Delete This Recipient", key="delete_single_recipient"):
-                                if delete_saved_recipient(selected_email):
-                                    st.success("✅ Recipient deleted!")
-                                    st.rerun()
-                                else:
-                                    st.error("❌ Failed to delete recipient")
-        else:
-            st.info("💡 No saved recipients yet. Add some recipients in the 'Recipients' tab and save them!")
-            
-            # Show example of how to save recipients
-            st.markdown("---")
-            st.subheader("💡 How to Save Recipients")
-            st.markdown("""
-            1. Go to the **"Recipients"** tab
-            2. Upload a CSV file or use the text form
-            3. Click **"💾 Save these recipients"** button
-            4. Your recipients will be saved here for future use!
-            """)
+                            with col1:
+                                st.write(f"**Email:** {selected_recipient_data.get('email')}")
+                                st.write(f"**Name:** {selected_recipient_data.get('name', 'N/A')}")
+                                st.write(f"**Company:** {selected_recipient_data.get('company', 'N/A')}")
+                                st.write(f"**Saved:** {selected_recipient_data.get('saved_date', 'N/A')}")
+                            
+                            with col2:
+                                if st.button("📧 Use This Recipient", key="use_single_recipient"):
+                                    st.session_state['selected_recipients'] = [selected_recipient_data]
+                                    st.success("✅ Selected recipient for sending!")
+                                
+                                if st.button("🗑️ Delete This Recipient", key="delete_single_recipient"):
+                                    if delete_saved_recipient(selected_email):
+                                        st.success("✅ Recipient deleted!")
+                                        st.rerun()
+                                    else:
+                                        st.error("❌ Failed to delete recipient")
+            else:
+                st.info("💡 No saved recipients yet. Add some recipients in the 'Recipients' tab and save them!")
+                
+                # Show example of how to save recipients
+                st.markdown("---")
+                st.subheader("💡 How to Save Recipients")
+                st.markdown("""
+                1. Go to the **"Recipients"** tab
+                2. Upload a CSV file or use the text form
+                3. Click **"💾 Save these recipients"** button
+                4. Your recipients will be saved here for future use!
+                """)
     
-    with tab5:
+    # Send emails tab (tab4 for non-admin, tab5 for admin)
+    send_tab = tab5 if is_admin else tab4
+    
+    with send_tab:
         st.header("🚀 Send Emails")
         
         # Get recipients from current session or saved recipients

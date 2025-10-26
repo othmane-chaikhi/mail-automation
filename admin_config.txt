@@ -1,0 +1,8 @@
+# Admin Configuration
+# Change the password below to your desired admin password
+admin_password=admin123
+
+# Instructions:
+# 1. Change 'admin123' to your desired password
+# 2. Keep this file secure and don't share it publicly
+# 3. The password is used to access saved recipients and admin features
