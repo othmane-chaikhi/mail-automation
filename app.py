@@ -320,12 +320,36 @@ Bien cordialement,
     def connect_smtp(self) -> bool:
         """Connect to SMTP server."""
         try:
+            # Debug: Show connection details (without showing password)
+            st.info(f"🔗 Connecting to {self.config['smtp_server']}:{self.config['smtp_port']}")
+            st.info(f"📧 Using email: {self.config['email']}")
+            st.info(f"🔑 App password: {'*' * len(self.config['app_password'])} (length: {len(self.config['app_password'])})")
+            
+            # Create SMTP connection
             self.server = smtplib.SMTP(self.config['smtp_server'], self.config['smtp_port'])
+            self.server.set_debuglevel(1)  # Enable debug output
+            
+            # Start TLS
+            st.info("🔒 Starting TLS encryption...")
             self.server.starttls()
+            
+            # Login with credentials
+            st.info("🔐 Authenticating with Gmail...")
             self.server.login(self.config['email'], self.config['app_password'])
+            
+            st.success("✅ Successfully connected to Gmail!")
             return True
+            
+        except smtplib.SMTPAuthenticationError as e:
+            st.error(f"❌ Authentication failed: {e}")
+            st.error("💡 Make sure you're using an App Password (not your regular Gmail password)")
+            st.error("💡 Ensure 2-Factor Authentication is enabled on your Google account")
+            return False
+        except smtplib.SMTPException as e:
+            st.error(f"❌ SMTP error: {e}")
+            return False
         except Exception as e:
-            st.error(f"Failed to connect to SMTP: {e}")
+            st.error(f"❌ Connection failed: {e}")
             return False
     
     def send_email(self, recipient: Dict, cv_path: str) -> bool:
@@ -395,6 +419,30 @@ Bien cordialement,
 def validate_email(email: str) -> bool:
     """Simple email validation."""
     return '@' in email and '.' in email.split('@')[1]
+
+def validate_gmail_credentials(email: str, app_password: str) -> tuple[bool, str]:
+    """Validate Gmail credentials before attempting connection."""
+    # Check email format
+    if not validate_email(email):
+        return False, "Invalid email format"
+    
+    # Check if it's a Gmail address
+    if not email.lower().endswith('@gmail.com'):
+        return False, "Please use a Gmail address"
+    
+    # Check app password format (should be 16 characters, no spaces)
+    if not app_password or len(app_password) != 16:
+        return False, "App password should be 16 characters long"
+    
+    # Check for spaces in app password
+    if ' ' in app_password:
+        return False, "App password should not contain spaces"
+    
+    # Check if app password contains only valid characters
+    if not app_password.isalnum():
+        return False, "App password should contain only letters and numbers"
+    
+    return True, "Credentials look valid"
 
 def check_admin_access():
     """Check if user has admin access to saved recipients."""
@@ -1389,6 +1437,15 @@ Your Name"""
                         'text': st.session_state.get('custom_text_template', '')
                     }
                     config['template'] = custom_template_config
+                
+                # Validate credentials before attempting connection
+                is_valid, error_message = validate_gmail_credentials(email, app_password)
+                if not is_valid:
+                    st.error(f"❌ Credential validation failed: {error_message}")
+                    st.error("💡 Please check your Gmail email and App Password")
+                    return
+                
+                st.success("✅ Credentials validated successfully!")
                 
                 # Initialize email automation
                 automation = EmailAutomation(config)
