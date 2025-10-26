@@ -1,0 +1,21 @@
+{
+  "email": "othmanechaikhi.pro@gmail.com",
+  "password": "tytacttnftiurzlz",
+  "provider": "gmail",
+  "smtp_server": "smtp.gmail.com",
+  "smtp_port": 587,
+  "min_delay": 40,
+  "max_delay": 90,
+  "max_emails_per_day": 30,
+  "subjects": [
+    "Candidature pour un stage PFE – Développement web / IA / Data",
+    "Candidature stage PFE - Technologies numériques",
+    "Candidature spontanée - Stage PFE Développement / IA",
+    "Candidature pour un stage PFE - Intelligence Artificielle"
+  ],
+  "greetings": [
+    "Bonjour",
+    "Salut",
+    "Bonjour"
+  ]
+}
