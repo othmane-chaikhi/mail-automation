@@ -451,6 +451,36 @@ def clean_template(template: str) -> str:
     # Also handle the closing braces
     template = template.replace('; }', '; }}')
     
+    # Handle the specific font-family case with space
+    template = template.replace('{ font-family:', '{{font-family:')
+    template = template.replace('{ line-height:', '{{line-height:')
+    template = template.replace('{ color:', '{{color:')
+    template = template.replace('{ max-width:', '{{max-width:')
+    template = template.replace('{ margin:', '{{margin:')
+    template = template.replace('{ padding:', '{{padding:')
+    template = template.replace('{ background-color:', '{{background-color:')
+    template = template.replace('{ border-radius:', '{{border-radius:')
+    template = template.replace('{ text-decoration:', '{{text-decoration:')
+    template = template.replace('{ border:', '{{border:')
+    template = template.replace('{ width:', '{{width:')
+    template = template.replace('{ height:', '{{height:')
+    
+    # Handle cases where there might be multiple spaces or different spacing
+    import re
+    # Use regex to find and replace CSS properties with spaces
+    template = re.sub(r'\{\s+font-family:', '{{font-family:', template)
+    template = re.sub(r'\{\s+line-height:', '{{line-height:', template)
+    template = re.sub(r'\{\s+color:', '{{color:', template)
+    template = re.sub(r'\{\s+max-width:', '{{max-width:', template)
+    template = re.sub(r'\{\s+margin:', '{{margin:', template)
+    template = re.sub(r'\{\s+padding:', '{{padding:', template)
+    template = re.sub(r'\{\s+background-color:', '{{background-color:', template)
+    template = re.sub(r'\{\s+border-radius:', '{{border-radius:', template)
+    template = re.sub(r'\{\s+text-decoration:', '{{text-decoration:', template)
+    template = re.sub(r'\{\s+border:', '{{border:', template)
+    template = re.sub(r'\{\s+width:', '{{width:', template)
+    template = re.sub(r'\{\s+height:', '{{height:', template)
+    
     return template
 
 def save_recipient_to_file(recipient: Dict):
@@ -802,8 +832,8 @@ def main():
 </body>
 </html>"""
             
-            # Add a reset button for templates
-            col1, col2 = st.columns([3, 1])
+            # Add template management buttons
+            col1, col2, col3 = st.columns([2, 1, 1])
             with col2:
                 if st.button("🔄 Reset Template", key="reset_custom_template"):
                     # Clear all template-related session state
@@ -850,6 +880,23 @@ You can use variables like {name}, {company}, {email} in your template.
 Best regards,
 Your Name"""
                     st.success("✅ Templates reset to defaults!")
+                    st.rerun()
+            
+            with col3:
+                if st.button("🔧 Fix Template", key="fix_custom_template"):
+                    # Clean the current template in session state
+                    if 'custom_html_template' in st.session_state:
+                        current_template = st.session_state['custom_html_template']
+                        cleaned_template = clean_template(current_template)
+                        st.session_state['custom_html_template'] = cleaned_template
+                        st.success("✅ HTML template cleaned and fixed!")
+                    
+                    if 'custom_text_template' in st.session_state:
+                        current_template = st.session_state['custom_text_template']
+                        cleaned_template = clean_template(current_template)
+                        st.session_state['custom_text_template'] = cleaned_template
+                        st.success("✅ Text template cleaned and fixed!")
+                    
                     st.rerun()
             
             if 'custom_text_template' not in st.session_state:
