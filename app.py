@@ -134,6 +134,7 @@ class EmailAutomation:
         html_template = template_config.get('html', '')
         
         if not html_template:
+            st.warning("No custom HTML template found. Using default template.")
             return self.get_default_html_template()
         
         # Replace variables in custom template
@@ -148,11 +149,12 @@ class EmailAutomation:
             )
             return html_content
         except KeyError as e:
-            st.error(f"Template error: Variable {e} not found in template")
-            return html_template
+            st.error(f"Template error: Variable {e} not found in HTML template")
+            # Return template with error message
+            return f"<p><strong>Template Error:</strong> Variable {e} not found in template.</p><hr>{html_template}"
         except Exception as e:
             st.error(f"Template error: {e}")
-            return html_template
+            return f"<p><strong>Template Error:</strong> {e}</p><hr>{html_template}"
     
     def get_default_html_template(self) -> str:
         """Default HTML template."""
@@ -263,6 +265,7 @@ class EmailAutomation:
         text_template = template_config.get('text', '')
         
         if not text_template:
+            st.warning("No custom text template found. Using default template.")
             return self.get_default_text_template()
         
         # Replace variables in custom template
@@ -277,11 +280,12 @@ class EmailAutomation:
             )
             return text_content.strip()
         except KeyError as e:
-            st.error(f"Template error: Variable {e} not found in template")
-            return text_template
+            st.error(f"Template error: Variable {e} not found in text template")
+            # Return template with error message
+            return f"Template Error: Variable {e} not found in template.\n\n{text_template}"
         except Exception as e:
             st.error(f"Template error: {e}")
-            return text_template
+            return f"Template Error: {e}\n\n{text_template}"
     
     def get_default_text_template(self) -> str:
         """Default text template."""
@@ -835,25 +839,47 @@ Your Name"""
                 
                 # Show HTML preview
                 if template_format in ["📄 HTML Template", "🔄 Both HTML & Text"]:
-                    html_content = st.session_state.get('custom_html_template', '').format(
-                        name=sample_name,
-                        company=sample_company,
-                        email=sample_email,
-                        greeting=f"Dear {sample_name}"
-                    )
-                    st.markdown("**HTML Preview:**")
-                    st.components.v1.html(html_content, height=600, scrolling=True)
+                    html_template = st.session_state.get('custom_html_template', '')
+                    if html_template:
+                        try:
+                            html_content = html_template.format(
+                                name=sample_name,
+                                company=sample_company,
+                                email=sample_email,
+                                greeting=f"Dear {sample_name}"
+                            )
+                            st.markdown("**HTML Preview:**")
+                            st.components.v1.html(html_content, height=600, scrolling=True)
+                        except KeyError as e:
+                            st.error(f"Template error: Variable {e} not found in HTML template")
+                            st.code(html_template, language='html')
+                        except Exception as e:
+                            st.error(f"Template error: {e}")
+                            st.code(html_template, language='html')
+                    else:
+                        st.warning("No HTML template found. Please create a template first.")
                 
                 # Show text preview
                 if template_format in ["📝 Text Template", "🔄 Both HTML & Text"]:
-                    text_content = st.session_state.get('custom_text_template', '').format(
-                        name=sample_name,
-                        company=sample_company,
-                        email=sample_email,
-                        greeting=f"Dear {sample_name}"
-                    )
-                    st.markdown("**Text Preview:**")
-                    st.text_area("Plain Text Version", text_content, height=300, disabled=True)
+                    text_template = st.session_state.get('custom_text_template', '')
+                    if text_template:
+                        try:
+                            text_content = text_template.format(
+                                name=sample_name,
+                                company=sample_company,
+                                email=sample_email,
+                                greeting=f"Dear {sample_name}"
+                            )
+                            st.markdown("**Text Preview:**")
+                            st.text_area("Plain Text Version", text_content, height=300, disabled=True)
+                        except KeyError as e:
+                            st.error(f"Template error: Variable {e} not found in text template")
+                            st.code(text_template, language='text')
+                        except Exception as e:
+                            st.error(f"Template error: {e}")
+                            st.code(text_template, language='text')
+                    else:
+                        st.warning("No text template found. Please create a template first.")
             
             # Custom template instructions
             st.markdown("---")
