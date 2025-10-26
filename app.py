@@ -22,6 +22,7 @@ from email import encoders
 from typing import List, Dict
 import io
 import re
+import json
 
 # Configure Streamlit page
 st.set_page_config(
@@ -317,6 +318,110 @@ def validate_email(email: str) -> bool:
     """Simple email validation."""
     return '@' in email and '.' in email.split('@')[1]
 
+def save_recipient_to_file(recipient: Dict):
+    """Save a recipient to the saved recipients file."""
+    try:
+        saved_file = "saved_recipients.json"
+        recipients = []
+        
+        # Load existing recipients
+        if os.path.exists(saved_file):
+            with open(saved_file, 'r', encoding='utf-8') as f:
+                recipients = json.load(f)
+        
+        # Add new recipient if not already exists
+        email = recipient.get('email', '').lower()
+        if not any(r.get('email', '').lower() == email for r in recipients):
+            recipient['saved_date'] = datetime.now().isoformat()
+            recipients.append(recipient)
+            
+            # Save back to file
+            with open(saved_file, 'w', encoding='utf-8') as f:
+                json.dump(recipients, f, indent=2, ensure_ascii=False)
+            
+            return True
+        return False
+    except Exception as e:
+        st.error(f"Error saving recipient: {e}")
+        return False
+
+def load_saved_recipients() -> List[Dict]:
+    """Load saved recipients from file."""
+    try:
+        saved_file = "saved_recipients.json"
+        if os.path.exists(saved_file):
+            with open(saved_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return []
+    except Exception as e:
+        st.error(f"Error loading saved recipients: {e}")
+        return []
+
+def delete_saved_recipient(email: str):
+    """Delete a recipient from saved recipients."""
+    try:
+        saved_file = "saved_recipients.json"
+        if os.path.exists(saved_file):
+            with open(saved_file, 'r', encoding='utf-8') as f:
+                recipients = json.load(f)
+            
+            # Remove recipient
+            recipients = [r for r in recipients if r.get('email', '').lower() != email.lower()]
+            
+            # Save back
+            with open(saved_file, 'w', encoding='utf-8') as f:
+                json.dump(recipients, f, indent=2, ensure_ascii=False)
+            
+            return True
+        return False
+    except Exception as e:
+        st.error(f"Error deleting recipient: {e}")
+        return False
+
+def parse_text_form_recipients(text: str) -> List[Dict]:
+    """Parse recipients from text form (copy/paste)."""
+    recipients = []
+    lines = text.strip().split('\n')
+    
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+            
+        # Try to extract email and name from various formats
+        # Format 1: email@domain.com
+        # Format 2: Name <email@domain.com>
+        # Format 3: Name, email@domain.com
+        # Format 4: email@domain.com, Name
+        
+        email = ""
+        name = ""
+        
+        # Check for <email> format
+        if '<' in line and '>' in line:
+            email_match = re.search(r'<([^>]+)>', line)
+            if email_match:
+                email = email_match.group(1).strip()
+                name = line.replace(f'<{email}>', '').strip()
+        else:
+            # Try to find email in the line
+            email_match = re.search(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', line)
+            if email_match:
+                email = email_match.group(0)
+                # Extract name (everything except the email)
+                name = line.replace(email, '').strip()
+                # Clean up name (remove commas, extra spaces)
+                name = re.sub(r'[,;]+', '', name).strip()
+        
+        if email and validate_email(email):
+            recipients.append({
+                'email': email,
+                'name': name,
+                'company': ''  # Default empty company
+            })
+    
+    return recipients
+
 def load_recipients_from_csv(csv_content: str) -> List[Dict]:
     """Load recipients from CSV content."""
     recipients = []
@@ -377,7 +482,7 @@ def main():
     st.markdown('<h1 class="main-header">📧 Email Automation App</h1>', unsafe_allow_html=True)
     
     # Create tabs for different sections
-    tab1, tab2, tab3, tab4 = st.tabs(["📧 Email Settings", "📝 Template Editor", "📁 File Upload", "🚀 Send Emails"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["📧 Email Settings", "📝 Template Editor", "📁 Recipients", "💾 Saved Recipients", "🚀 Send Emails"])
     
     with tab1:
         st.header("📧 Email Configuration")
@@ -495,26 +600,38 @@ def main():
             st.text_area("Plain Text Version", text_content, height=300, disabled=True)
     
     with tab3:
-        st.header("📁 File Upload")
+        st.header("📁 Recipients & Files")
         
-        col1, col2 = st.columns(2)
+        # CV Upload Section
+        st.subheader("📄 Upload CV (PDF)")
+        cv_file = st.file_uploader("Upload your CV", type=['pdf'], help="Upload your CV in PDF format", key="cv_upload")
         
-        with col1:
-            st.subheader("📄 Upload CV (PDF)")
-            cv_file = st.file_uploader("Upload your CV", type=['pdf'], help="Upload your CV in PDF format", key="cv_upload")
-            
-            if cv_file:
-                st.success(f"✅ CV uploaded: {cv_file.name}")
-                # Save CV temporarily
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
-                    tmp_file.write(cv_file.getvalue())
-                    cv_path = tmp_file.name
-            else:
-                cv_path = None
-                st.warning("⚠️ Please upload your CV")
+        if cv_file:
+            st.success(f"✅ CV uploaded: {cv_file.name}")
+            # Save CV temporarily
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+                tmp_file.write(cv_file.getvalue())
+                cv_path = tmp_file.name
+        else:
+            cv_path = None
+            st.warning("⚠️ Please upload your CV")
         
-        with col2:
-            st.subheader("📋 Recipients CSV")
+        st.markdown("---")
+        
+        # Recipients Input Methods
+        st.subheader("📋 Add Recipients")
+        
+        # Toggle between CSV upload and text form
+        input_method = st.radio(
+            "Choose input method:",
+            ["📄 Upload CSV File", "📝 Copy/Paste Text Form"],
+            key="input_method"
+        )
+        
+        recipients = []
+        
+        if input_method == "📄 Upload CSV File":
+            st.subheader("📄 Upload Recipients CSV")
             csv_file = st.file_uploader("Upload recipients CSV", type=['csv'], help="CSV with columns: email, name, company", key="csv_upload")
             
             if csv_file:
@@ -530,6 +647,14 @@ def main():
                         df = pd.DataFrame(recipients)
                         st.dataframe(df, width='stretch')
                         st.info(f"Found {len(recipients)} valid recipients")
+                        
+                        # Save recipients option
+                        if st.button("💾 Save these recipients", key="save_csv_recipients"):
+                            saved_count = 0
+                            for recipient in recipients:
+                                if save_recipient_to_file(recipient):
+                                    saved_count += 1
+                            st.success(f"✅ Saved {saved_count} recipients to your collection!")
                     else:
                         st.error("No valid recipients found in CSV")
                         
@@ -537,18 +662,155 @@ def main():
                     st.error(f"Error reading CSV: {e}")
                     recipients = []
             else:
-                recipients = []
                 st.warning("⚠️ Please upload recipients CSV")
+        
+        else:  # Text Form
+            st.subheader("📝 Copy/Paste Recipients")
+            st.markdown("""
+            **Supported formats:**
+            - `email@domain.com`
+            - `Name <email@domain.com>`
+            - `Name, email@domain.com`
+            - `email@domain.com, Name`
+            """)
+            
+            text_input = st.text_area(
+                "Paste your recipients here (one per line):",
+                height=200,
+                placeholder="john@example.com\nJane Doe <jane@example.com>\nBob Smith, bob@example.com",
+                key="text_recipients"
+            )
+            
+            if text_input.strip():
+                recipients = parse_text_form_recipients(text_input)
+                
+                if recipients:
+                    st.subheader("📊 Parsed Recipients")
+                    df = pd.DataFrame(recipients)
+                    st.dataframe(df, width='stretch')
+                    st.info(f"Found {len(recipients)} valid recipients")
+                    
+                    # Save recipients option
+                    if st.button("💾 Save these recipients", key="save_text_recipients"):
+                        saved_count = 0
+                        for recipient in recipients:
+                            if save_recipient_to_file(recipient):
+                                saved_count += 1
+                        st.success(f"✅ Saved {saved_count} recipients to your collection!")
+                else:
+                    st.error("No valid recipients found in the text")
+            else:
+                st.warning("⚠️ Please enter recipients in the text area")
     
     with tab4:
+        st.header("💾 Saved Recipients")
+        
+        # Load saved recipients
+        saved_recipients = load_saved_recipients()
+        
+        if saved_recipients:
+            st.subheader(f"📊 Your Saved Recipients ({len(saved_recipients)} total)")
+            
+            # Display saved recipients
+            df = pd.DataFrame(saved_recipients)
+            st.dataframe(df, width='stretch')
+            
+            # Actions
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                if st.button("🔄 Use All Saved Recipients", key="use_all_saved"):
+                    st.session_state['selected_recipients'] = saved_recipients
+                    st.success(f"✅ Selected {len(saved_recipients)} recipients for sending!")
+            
+            with col2:
+                if st.button("📥 Export as CSV", key="export_saved"):
+                    csv = df.to_csv(index=False)
+                    st.download_button(
+                        label="Download CSV",
+                        data=csv,
+                        file_name=f"saved_recipients_{datetime.now().strftime('%Y%m%d')}.csv",
+                        mime="text/csv"
+                    )
+            
+            with col3:
+                if st.button("🗑️ Clear All Saved", key="clear_all_saved"):
+                    if os.path.exists("saved_recipients.json"):
+                        os.remove("saved_recipients.json")
+                    st.success("✅ All saved recipients cleared!")
+                    st.rerun()
+            
+            # Individual recipient management
+            st.markdown("---")
+            st.subheader("🔧 Manage Individual Recipients")
+            
+            # Select recipient to manage
+            recipient_options = [f"{r.get('name', '')} ({r.get('email', '')})" for r in saved_recipients]
+            if recipient_options:
+                selected_recipient = st.selectbox("Select recipient to manage:", recipient_options, key="manage_recipient")
+                
+                if selected_recipient:
+                    # Find the selected recipient
+                    selected_email = selected_recipient.split('(')[-1].rstrip(')')
+                    selected_recipient_data = next((r for r in saved_recipients if r.get('email') == selected_email), None)
+                    
+                    if selected_recipient_data:
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            st.write(f"**Email:** {selected_recipient_data.get('email')}")
+                            st.write(f"**Name:** {selected_recipient_data.get('name', 'N/A')}")
+                            st.write(f"**Company:** {selected_recipient_data.get('company', 'N/A')}")
+                            st.write(f"**Saved:** {selected_recipient_data.get('saved_date', 'N/A')}")
+                        
+                        with col2:
+                            if st.button("📧 Use This Recipient", key="use_single_recipient"):
+                                st.session_state['selected_recipients'] = [selected_recipient_data]
+                                st.success("✅ Selected recipient for sending!")
+                            
+                            if st.button("🗑️ Delete This Recipient", key="delete_single_recipient"):
+                                if delete_saved_recipient(selected_email):
+                                    st.success("✅ Recipient deleted!")
+                                    st.rerun()
+                                else:
+                                    st.error("❌ Failed to delete recipient")
+        else:
+            st.info("💡 No saved recipients yet. Add some recipients in the 'Recipients' tab and save them!")
+            
+            # Show example of how to save recipients
+            st.markdown("---")
+            st.subheader("💡 How to Save Recipients")
+            st.markdown("""
+            1. Go to the **"Recipients"** tab
+            2. Upload a CSV file or use the text form
+            3. Click **"💾 Save these recipients"** button
+            4. Your recipients will be saved here for future use!
+            """)
+    
+    with tab5:
         st.header("🚀 Send Emails")
+        
+        # Get recipients from current session or saved recipients
+        current_recipients = recipients if 'recipients' in locals() else []
+        saved_recipients_session = st.session_state.get('selected_recipients', [])
+        
+        # Combine recipients
+        all_recipients = current_recipients + saved_recipients_session
+        
+        # Remove duplicates based on email
+        seen_emails = set()
+        unique_recipients = []
+        for recipient in all_recipients:
+            email = recipient.get('email', '').lower()
+            if email not in seen_emails:
+                seen_emails.add(email)
+                unique_recipients.append(recipient)
         
         # Check if all required fields are provided
         all_ready = (
             email and app_password and 
             cv_file is not None and 
-            csv_file is not None and 
-            len(recipients) > 0
+            len(unique_recipients) > 0
         )
         
         if not all_ready:
@@ -560,10 +822,25 @@ def main():
                 all_ready = False
             
             # Check recipient count
-            if len(recipients) > max_emails:
-                st.warning(f"⚠️ You have {len(recipients)} recipients but limit is {max_emails}")
+            if len(unique_recipients) > max_emails:
+                st.warning(f"⚠️ You have {len(unique_recipients)} recipients but limit is {max_emails}")
                 if not st.checkbox("Continue anyway (not recommended)"):
                     all_ready = False
+            
+            # Show recipient summary
+            if unique_recipients:
+                st.subheader("📊 Recipients Summary")
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.metric("Total Recipients", len(unique_recipients))
+                with col2:
+                    st.metric("Current Recipients", len(current_recipients))
+                    st.metric("Saved Recipients", len(saved_recipients_session))
+                
+                # Show recipients preview
+                if st.checkbox("Show recipients preview", key="show_recipients_preview"):
+                    df = pd.DataFrame(unique_recipients)
+                    st.dataframe(df, width='stretch')
         
         # Send button
         if st.button("🚀 Start Sending Emails", disabled=not all_ready, type="primary", key="send_btn"):
@@ -600,9 +877,9 @@ def main():
                 
                 # Send emails with progress tracking
                 try:
-                    total_recipients = len(recipients)
+                    total_recipients = len(unique_recipients)
                     
-                    for i, recipient in enumerate(recipients):
+                    for i, recipient in enumerate(unique_recipients):
                         # Update progress
                         progress = (i + 1) / total_recipients
                         progress_bar.progress(progress)
