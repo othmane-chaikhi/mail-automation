@@ -772,6 +772,49 @@ def main():
 </body>
 </html>"""
             
+            # Add a reset button for templates
+            col1, col2 = st.columns([3, 1])
+            with col2:
+                if st.button("🔄 Reset Template", key="reset_custom_template"):
+                    st.session_state['custom_html_template'] = """<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #f8f9fa; padding: 20px; border-radius: 5px; }
+        .content { padding: 20px 0; }
+        .footer { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Your Email Subject</h2>
+        </div>
+        <div class="content">
+            <p>Dear {name},</p>
+            <p>Your custom email content here...</p>
+            <p>You can use variables like {name}, {company}, {email} in your template.</p>
+        </div>
+        <div class="footer">
+            <p>Best regards,<br>Your Name</p>
+        </div>
+    </div>
+</body>
+</html>"""
+                    st.session_state['custom_text_template'] = """Dear {name},
+
+Your custom email content here...
+
+You can use variables like {name}, {company}, {email} in your template.
+
+Best regards,
+Your Name"""
+                    st.success("✅ Templates reset to defaults!")
+                    st.rerun()
+            
             if 'custom_text_template' not in st.session_state:
                 st.session_state['custom_text_template'] = """Dear {name},
 
@@ -845,6 +888,11 @@ Your Name"""
                         )
                         st.markdown("**HTML Preview:**")
                         st.components.v1.html(html_content, height=600, scrolling=True)
+                        
+                        # Debug: Show template content if there's an error
+                        if "Template Error:" in html_content:
+                            st.markdown("**Debug - Template Content:**")
+                            st.code(html_template, language='html')
                     else:
                         st.warning("No HTML template found. Please create a template first.")
                 
