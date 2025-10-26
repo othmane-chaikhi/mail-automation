@@ -140,12 +140,9 @@ class EmailAutomation:
         # Replace variables in custom template
         greeting = self.get_random_greeting(name)
         
-        # Clean and use safe formatting with multiple passes
-        cleaned_template = clean_template(html_template)
-        # Double-check with another cleaning pass
-        cleaned_template = clean_template(cleaned_template)
-        return safe_format_template(
-            cleaned_template,
+        # Use smart formatting that handles CSS vs template variables
+        return smart_format_template(
+            html_template,
             name=name or '',
             company=company or '',
             email=self.config.get('email', ''),
@@ -265,12 +262,9 @@ class EmailAutomation:
         # Replace variables in custom template
         greeting = self.get_random_greeting(name)
         
-        # Clean and use safe formatting with multiple passes
-        cleaned_template = clean_template(text_template)
-        # Double-check with another cleaning pass
-        cleaned_template = clean_template(cleaned_template)
-        return safe_format_template(
-            cleaned_template,
+        # Use smart formatting that handles CSS vs template variables
+        return smart_format_template(
+            text_template,
             name=name or '',
             company=company or '',
             email=self.config.get('email', ''),
@@ -429,6 +423,71 @@ def safe_format_template(template: str, **kwargs) -> str:
         st.error(f"Template error: {e}")
         return f"Template Error: {e}\n\n{template}"
 
+def smart_format_template(template: str, **kwargs) -> str:
+    """Smart template formatting that handles CSS vs template variables."""
+    import re
+    
+    # First, identify and protect CSS properties
+    # Find all CSS properties in style blocks and inline styles
+    css_patterns = []
+    
+    # Find <style> blocks
+    style_blocks = re.findall(r'<style>(.*?)</style>', template, re.DOTALL)
+    for style_block in style_blocks:
+        # Find all CSS properties in this block
+        css_props = re.findall(r'\{([^}]+)\}', style_block)
+        for css_prop in css_props:
+            css_patterns.append(css_prop)
+    
+    # Find inline styles
+    inline_styles = re.findall(r'style="([^"]*)"', template)
+    for inline_style in inline_styles:
+        # Find CSS properties in inline styles
+        css_props = re.findall(r'\{([^}]+)\}', inline_style)
+        for css_prop in css_props:
+            css_patterns.append(css_prop)
+    
+    # Now format the template, but skip CSS properties
+    try:
+        # Create a list of valid template variables
+        valid_vars = set(kwargs.keys())
+        
+        # Find all template variables in the template
+        template_vars = re.findall(r'\{([^}]+)\}', template)
+        
+        # Filter out CSS properties from template variables
+        actual_template_vars = []
+        for var in template_vars:
+            # Check if this looks like a CSS property
+            is_css = False
+            for css_pattern in css_patterns:
+                if var in css_pattern or css_pattern in var:
+                    is_css = True
+                    break
+            
+            # Also check if it's a known CSS property
+            css_properties = ['font-family', 'line-height', 'color', 'max-width', 'margin', 'padding',
+                            'background-color', 'border-radius', 'text-decoration', 'border',
+                            'width', 'height', 'font-size', 'font-weight', 'text-align']
+            
+            if any(prop in var for prop in css_properties):
+                is_css = True
+            
+            if not is_css and var in valid_vars:
+                actual_template_vars.append(var)
+        
+        # Format only the valid template variables
+        result = template
+        for var in actual_template_vars:
+            if var in kwargs:
+                result = result.replace(f'{{{var}}}', str(kwargs[var]))
+        
+        return result
+        
+    except Exception as e:
+        st.error(f"Smart template formatting error: {e}")
+        return template
+
 def clean_template(template: str) -> str:
     """Clean template to remove problematic formatting."""
     if not template:
@@ -439,36 +498,16 @@ def clean_template(template: str) -> str:
     
     import re
     
-    # COMPREHENSIVE CSS VARIABLE FIX
-    # This handles ALL possible CSS property conflicts
+    # NEW APPROACH: Don't escape CSS properties, just ensure they're properly formatted
+    # The issue is that CSS properties are being treated as template variables
+    # We need to keep CSS working but prevent template variable conflicts
     
-    # 1. Handle <style> blocks - escape ALL CSS properties
-    def escape_style_block(match):
-        style_content = match.group(1)
-        # Escape ALL CSS properties that look like template variables
-        # Pattern: {property:value} -> {{property:value}}
-        style_content = re.sub(r'\{([^}]+):', r'{{\1:', style_content)
-        return f'<style>{style_content}</style>'
+    # 1. Fix CSS properties that have spaces before the colon
+    # This handles cases like "max-width :" which should be "max-width:"
+    template = re.sub(r'(\w+)\s*:\s*', r'\1:', template)
     
-    # Apply to all <style> blocks
-    template = re.sub(r'<style>(.*?)</style>', escape_style_block, template, flags=re.DOTALL)
-    
-    # 2. Handle inline styles - escape ALL CSS properties
-    def escape_inline_style(match):
-        style_content = match.group(1)
-        # Escape ALL CSS properties in inline styles
-        style_content = re.sub(r'\{([^}]+):', r'{{\1:', style_content)
-        return f'style="{style_content}"'
-    
-    # Apply to all inline styles
-    template = re.sub(r'style="([^"]*)"', escape_inline_style, template)
-    
-    # 3. Handle any remaining CSS-like patterns that might be template variables
-    # This catches any {property:value} patterns that weren't in style blocks
-    template = re.sub(r'\{([a-zA-Z-]+):([^}]+)\}', r'{{\1:\2}}', template)
-    
-    # 4. Handle specific problematic patterns
-    # Fix common CSS properties that cause issues
+    # 2. Ensure CSS properties are properly formatted
+    # Handle cases where CSS properties might be malformed
     css_properties = [
         'font-family', 'line-height', 'color', 'max-width', 'margin', 'padding',
         'background-color', 'border-radius', 'text-decoration', 'border',
@@ -477,17 +516,12 @@ def clean_template(template: str) -> str:
         'z-index', 'opacity', 'transform', 'transition', 'animation'
     ]
     
+    # Fix spacing issues in CSS properties
     for prop in css_properties:
-        # Handle {property: and { property: patterns
-        template = re.sub(r'\{\s*' + prop + r':', '{{' + prop + ':', template)
-        template = re.sub(r'\{\s*' + prop + r'\s*:', '{{' + prop + ':', template)
-    
-    # AGGRESSIVE FIX: Handle any remaining CSS-like patterns
-    # This is a catch-all for any CSS property that might cause issues
-    template = re.sub(r'\{\s*([a-zA-Z-]+)\s*:\s*([^}]+)\s*\}', r'{{\1:\2}}', template)
-    
-    # EXTRA AGGRESSIVE: Handle any single braces that might be CSS
-    template = re.sub(r'\{\s*([a-zA-Z-]+)\s*:', r'{{\1:', template)
+        # Fix "property :" to "property:"
+        template = re.sub(r'\b' + prop + r'\s*:\s*', prop + ':', template)
+        # Fix "property :" to "property:"
+        template = re.sub(r'\{\s*' + prop + r'\s*:', '{' + prop + ':', template)
     
     return template
 
@@ -1004,9 +1038,8 @@ Your Name"""
                 if template_format in ["📄 HTML Template", "🔄 Both HTML & Text"]:
                     html_template = st.session_state.get('custom_html_template', '')
                     if html_template:
-                        cleaned_template = clean_template(html_template)
-                        html_content = safe_format_template(
-                            cleaned_template,
+                        html_content = smart_format_template(
+                            html_template,
                             name=sample_name,
                             company=sample_company,
                             email=sample_email,
@@ -1026,9 +1059,8 @@ Your Name"""
                 if template_format in ["📝 Text Template", "🔄 Both HTML & Text"]:
                     text_template = st.session_state.get('custom_text_template', '')
                     if text_template:
-                        cleaned_template = clean_template(text_template)
-                        text_content = safe_format_template(
-                            cleaned_template,
+                        text_content = smart_format_template(
+                            text_template,
                             name=sample_name,
                             company=sample_company,
                             email=sample_email,
