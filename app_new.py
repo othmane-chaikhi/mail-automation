@@ -367,6 +367,12 @@ def main():
     """Main application."""
     st.markdown('<h1 class="main-header">📧 Email Automation Pro</h1>', unsafe_allow_html=True)
     
+    # Clear any cached session state for email fields
+    if 'email_input' in st.session_state:
+        del st.session_state['email_input']
+    if 'app_password' in st.session_state:
+        del st.session_state['app_password']
+    
     # Initialize managers
     config_manager = EmailConfig()
     recipient_manager = RecipientManager()
@@ -449,14 +455,29 @@ def main():
             
             st.markdown('</div>', unsafe_allow_html=True)
         
+        # Debug info
+        st.subheader("🔍 Debug Information")
+        st.info(f"📧 Config file email: {config.get('email', 'NOT FOUND')}")
+        st.info(f"📧 Form email: {email}")
+        st.info(f"🔑 Password length: {len(app_password) if app_password else 0}")
+        
+        # Clear cache button
+        if st.button("🔄 Clear Cache & Reload"):
+            st.cache_data.clear()
+            st.session_state.clear()
+            st.rerun()
+        
         # Test connection button
         if st.button("🔍 Test Gmail Connection", type="primary"):
+            # Use config file values, not form values
             test_config = {
-                'email': email,
-                'app_password': app_password,
+                'email': config.get('email', email),
+                'app_password': config.get('app_password', app_password),
                 'smtp_server': smtp_server,
                 'smtp_port': smtp_port
             }
+            
+            st.info(f"🔍 Using email: {test_config['email']}")
             
             sender = EmailSender(test_config)
             with st.spinner("Testing connection..."):
@@ -642,8 +663,18 @@ def main():
             )
         
         if st.button("🚀 Start Sending", type="primary"):
+            # Use config file values for sending
+            send_config = {
+                'email': current_config.get('email'),
+                'app_password': current_config.get('app_password'),
+                'smtp_server': current_config.get('smtp_server', 'smtp.gmail.com'),
+                'smtp_port': current_config.get('smtp_port', 587)
+            }
+            
+            st.info(f"📧 Sending emails from: {send_config['email']}")
+            
             # Initialize email sender
-            sender = EmailSender(current_config)
+            sender = EmailSender(send_config)
             
             # Connect to SMTP
             with st.spinner("Connecting to Gmail..."):
